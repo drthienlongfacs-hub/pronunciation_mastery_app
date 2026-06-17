@@ -167,12 +167,19 @@ async function toggleRecording() {
     }
     
     stopVisualization();
-    
+
+    // Chấm âm vị thật từ audio đã thu (nếu bật)
+    if (typeof phonemeStopAndScore === 'function') {
+      const sIdx = state.currentSentenceIdx;
+      const sText = EXERCISES.shadowingSentences.sentences[sIdx]?.text;
+      if (sText) phonemeStopAndScore(sText, 'phonemePanel', 'phonemeContent', `sent:${sIdx}`);
+    }
+
     if (recordingStream) {
       recordingStream.getTracks().forEach(t => t.stop());
       recordingStream = null;
     }
-    
+
     state.sessions++;
     if (state.sessionStart) {
       state.totalMinutes += Math.max(1, Math.round((Date.now() - state.sessionStart) / 60000));
@@ -204,7 +211,10 @@ async function toggleRecording() {
     label.textContent = 'Đang thu âm... Hãy nói tự nhiên, nghỉ lấy hơi thoải mái';
     
     initAudioVisualization(stream);
-    
+
+    // Thu audio song song để chấm âm vị thật (nếu bật)
+    if (typeof phonemeStartCapture === 'function') phonemeStartCapture(stream);
+
     // continuous = true cho phép bác sĩ Long ngắt nghỉ lấy hơi giữa câu thoải mái
     state.recognition = initSpeechRecognition(true);
     if (!state.recognition) {
