@@ -9,7 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '12mb' })); // audio base64 cần limit lớn hơn
 app.use(express.static(path.join(__dirname)));
 
 const PROGRESS_FILE = path.join(__dirname, 'data', 'user_progress.json');
@@ -295,6 +295,103 @@ app.get('/api/tts', (req, res) => {
     res.sendFile(cachePath);
   });
 });
+
+// ── API: Phoneme-level Pronunciation Scoring (mã nguồn mở, miễn phí) ──
+// So âm vị bác sĩ đọc với âm vị giọng mẫu Edge-TTS qua allosaurus.
+const VENV_PY = path.join(__dirname, '_phoneme_probe', 'venv', 'bin', 'python');
+const SCORER = path.join(__dirname, 'phoneme_score.py');
+const EDGE_TTS = '/Users/mac/Library/Python/3.9/bin/edge-tts';
+const PHONEME_ENABLED = fs.existsSync(VENV_PY) && fs.existsSync(SCORER);
+
+// Tạo (hoặc lấy từ cache) file WAV 16k của giọng mẫu cho 1 đoạn text
+function ensureReferenceWav(text, cb) {
+  const voice = 'en-US-AvaNeural';
+  const hash = crypto.createHash('md5').update(`ref_${text}_${voice}`).digest('hex');
+  const mp3 = path.join(CACHE_DIR, `${hash}.mp3`);
+  const wav = path.join(CACHE_DIR, `${hash}.wav`);
+  if (fs.existsSync(wav)) return cb(null, wav);
+
+  const toWav = () => execFile('ffmpeg', ['-y', '-i', mp3, '-ar', '16000', '-ac', '1', wav],
+    (err) => err ? cb(err) : cb(null, wav));
+
+  if (fs.existsSync(mp3)) return toWav();
+  execFile(EDGE_TTS, ['--text', text, '--voice', voice, '--write-media', mp3],
+    (err) => err ? cb(err) : toWav());
+}
+
+app.get('/api/phoneme-enabled', (req, res) => res.json({ enabled: PHONEME_ENABLED }));
+
+app.post('/api/phoneme-score', (req, res) => {
+  if (!PHONEME_ENABLED) {
+    return res.json({ enabled: false, error: 'Chấm âm vị chưa sẵn sàng trên máy này.' });
+  }
+  const { targetText, audioBase64, mimeType } = req.body || {};
+  if (!targetText || !audioBase64) {
+    return res.status(400).json({ error: 'Thiếu targetText hoặc audioBase64' });
+  }
+
+  // Lưu audio người dùng -> wav 16k
+  const stamp = crypto.randomBytes(6).toString('hex');
+  const ext = (mimeType && mimeType.includes('wav')) ? 'wav' : 'webm';
+  const rawPath = path.join(CACHE_DIR, `user_${stamp}.${ext}`);
+  const userWav = path.join(CACHE_DIR, `user_${stamp}.wav`);
+  const cleanup = () => [rawPath, userWav].forEach(f => { try { fs.unlinkSync(f); } catch (e) {} });
+
+  try {
+    fs.writeFileSync(rawPath, Buffer.from(audioBase64, 'base64'));
+  } catch (e) {
+    return res.status(400).json({ error: 'audioBase64 không hợp lệ' });
+  }
+
+  execFile('ffmpeg', ['-y', '-i', rawPath, '-ar', '16000', '-ac', '1', userWav], (ffErr) => {
+    if (ffErr) { cleanup(); return res.status(500).json({ error: 'Chuyển đổi audio thất bại' }); }
+    ensureReferenceWav(targetText, (refErr, refWav) => {
+      if (refErr) { cleanup(); return res.status(500).json({ error: 'Tạo giọng mẫu thất bại' }); }
+      execFile(VENV_PY, [SCORER, userWav, refWav], { timeout: 30000 }, (scErr, stdout, stderr) => {
+        cleanup();
+        if (scErr) { console.error('scorer err', stderr); return res.status(500).json({ error: 'Chấm âm vị thất bại' }); }
+        try {
+          const result = JSON.parse(stdout.trim().split('\n').pop());
+          result.enabled = true;
+          result.feedbacks = buildPhonemeFeedback(result);
+          res.json(result);
+        } catch (e) {
+          res.status(500).json({ error: 'Kết quả chấm không đọc được', raw: stdout });
+        }
+      });
+    });
+  });
+});
+
+// Hướng dẫn cơ học theo âm vị thiếu/sai (gắn với lý thuyết Day 1-7)
+const PHONE_ADVICE = {
+  'θ': 'Âm /θ/ (th vô thanh): đặt đầu lưỡi NHẸ giữa hai hàm răng, thổi hơi liên tục. Đừng biến thành /t/ hay /s/.',
+  'ð': 'Âm /ð/ (th hữu thanh): lưỡi giữa răng + RUNG dây thanh quản (this, they). Đừng biến thành /d/.',
+  's': 'Âm /s/ cuối: khép răng, thổi hơi xì rõ. Người Việt hay nuốt âm xì cuối.',
+  'z': 'Âm /z/: như /s/ nhưng RUNG thanh quản. Thường ở đuôi số nhiều/động từ.',
+  't': 'Âm /t/ cuối: đầu lưỡi chặn ngạc rồi bật hơi dứt khoát. Đừng nuốt.',
+  'd': 'Âm /d/ cuối: chặn ngạc + rung thanh quản rồi bật nhẹ. Người Việt hay bỏ.',
+  'k': 'Âm /k/ cuối: cuống lưỡi chặn ngạc mềm rồi bật hơi. Đừng nuốt (risk, distinct).',
+  'v': 'Âm /v/: răng cửa trên chạm môi dưới + rung thanh quản. Đừng đọc thành /w/ hay /f/.',
+  'f': 'Âm /f/: răng cửa trên chạm môi dưới, thổi hơi (không rung).',
+  'ŋ': 'Âm /ŋ/ (ng): cuống lưỡi chặn ngạc mềm, hơi vang qua MŨI (morning, strengths).',
+  'ɹ': 'Âm /r/ tiếng Anh: cong nhẹ đầu lưỡi, KHÔNG rung như "r" tiếng Việt.',
+  'l': 'Âm /l/: đầu lưỡi chạm lợi sau răng cửa trên.',
+};
+
+function buildPhonemeFeedback(result) {
+  const fb = [];
+  const seen = new Set();
+  (result.missing || []).forEach(p => {
+    const base = String(p).replace(/[ʰːˈˌ]/g, '');
+    if (PHONE_ADVICE[base] && !seen.has(base)) { seen.add(base); fb.push({ phone: p, type: 'thiếu', advice: PHONE_ADVICE[base] }); }
+  });
+  (result.substituted || []).forEach(([refP]) => {
+    const base = String(refP).replace(/[ʰːˈˌ]/g, '');
+    if (PHONE_ADVICE[base] && !seen.has(base)) { seen.add(base); fb.push({ phone: refP, type: 'sai', advice: PHONE_ADVICE[base] }); }
+  });
+  return fb;
+}
 
 app.listen(PORT, () => {
   console.log(`============================================================`);
