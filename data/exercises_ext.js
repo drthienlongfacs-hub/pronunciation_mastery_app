@@ -184,11 +184,17 @@ const EXERCISES_GUIDES = {
       "Phát âm 'buil', nâng lưỡi chạm ngạc tạo âm /l/.",
       "Bật nhẹ hơi đầu lưỡi tạo âm /d/ thành 'build'.",
       "Khép răng xì hơi tạo âm /z/ thành 'builds'.",
-      "Làm tương tự với chuỗi: ris -> risk -> risks."
+      "Làm tương tự với chuỗi: ris -> risk -> risks.",
+      "Thực hành chuỗi chuyên biệt cho 'drives': ry -> dry -> drive -> drives.",
+      "Phát âm 'ry' (/raɪ/), tròn môi mở ngạc.",
+      "Nhấn đầu lưỡi tạo /d/ chặn hơi để ra 'dry' (/draɪ/).",
+      "Khép răng hàm cắn nhẹ môi tạo luồng xì hơi rung thanh quản cho 'drive' (/draɪv/).",
+      "Khép chặt răng cửa giữ luồng rung xát hữu thanh kéo ra âm đuôi 'drives' (/draɪvz/)."
     ],
     pitfalls: [
       "Đọc nhảy cóc từ đầu tiên ra từ cuối cùng làm mất âm chặn ở giữa.",
-      "Cố tình đọc tách rời các âm quá lâu gây đứt quãng từ."
+      "Cố tình đọc tách rời các âm quá lâu gây đứt quãng từ.",
+      "Nuốt âm /v/ khi đọc drives biến từ này thành drys (/draɪz/)."
     ],
     duration: 20
   },

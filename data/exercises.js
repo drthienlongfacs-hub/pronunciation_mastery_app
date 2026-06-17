@@ -56,7 +56,7 @@ const EXERCISES = {
       { id: "voicing-sentences", name: "ASR Test: Câu phân biệt bật hơi", type: "sentences", targetSets: 2, desc: "Đọc câu mẫu: 'I am a surgeon and urologist, holding a Master of Science degree.' Chú ý bật hơi mạnh phụ âm." }
     ],
     4: [
-      { id: "buildup-drill", name: "Kỹ thuật Build-up phụ âm cuối", type: "words", targetSets: 3, desc: "Thực hành chuỗi: buil -> build -> builds; ris -> risk -> risks; shape -> shaped. Đọc 10 chuỗi = 1 set." },
+      { id: "buildup-drill", name: "Kỹ thuật Build-up phụ âm cuối", type: "words", targetSets: 3, desc: "Thực hành chuỗi: buil -> build -> builds; ris -> risk -> risks; ry -> dry -> drive -> drives. Đọc 10 chuỗi = 1 set." },
       { id: "final-clusters", name: "Luyện Cụm phụ âm đuôi phức tạp", type: "minimal-pairs", targetSets: 3, desc: "Luyện phát âm các từ: builds, risks, trust, robust, strict, prompts, contexts, accepts, facts, distinct." },
       { id: "linking-rules", name: "Nối âm thực tế (Linking)", type: "sentences", targetSets: 2, desc: "Nối âm: 'holds a', 'builds up', 'risk of'. Đọc 5 cụm nối âm liên tục 10 lần = 1 set." },
       { id: "clusters-sentences", name: "ASR Test: Câu cụm phụ âm cuối", type: "sentences", targetSets: 2, desc: "Đọc câu mẫu: 'Business ethics builds long-term reputation and stakeholder trust.'" }
