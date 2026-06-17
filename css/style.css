@@ -1031,3 +1031,75 @@ body::before {
   cursor: not-allowed;
   box-shadow: none;
 }
+
+/* ── Upgraded Set Tracker UI Styles ── */
+.practice-item {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.practice-item.expanded {
+  border-color: rgba(99, 102, 241, 0.45);
+  background: rgba(26, 34, 53, 0.55);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.practice-guide-panel {
+  animation: slideDownFade 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* breathing circle transitions & animations */
+.breathing-circle {
+  transition: all 1s ease-in-out;
+}
+
+.breathing-circle.inhale {
+  transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1), background 4s ease-in-out;
+  transform: scale(2.2);
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.5) 0%, rgba(99, 102, 241, 0.85) 100%) !important;
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.5), 0 0 50px rgba(99, 102, 241, 0.3);
+}
+
+.breathing-circle.hold {
+  transition: transform 2s ease-in-out, background 2s ease-in-out;
+  transform: scale(2.2);
+  background: radial-gradient(circle, rgba(234, 179, 8, 0.5) 0%, rgba(234, 179, 8, 0.85) 100%) !important;
+  box-shadow: 0 0 35px rgba(234, 179, 8, 0.5), 0 0 55px rgba(234, 179, 8, 0.3);
+}
+
+.breathing-circle.exhale {
+  transition: transform 6s cubic-bezier(0.4, 0, 0.2, 1), background 6s ease-in-out;
+  transform: scale(1);
+  background: radial-gradient(circle, var(--accent-glow) 0%, var(--accent-primary) 100%) !important;
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+/* Timer animations */
+@keyframes timerPulse {
+  0% { transform: scale(1); text-shadow: 0 0 10px rgba(99, 102, 241, 0.2); }
+  50% { transform: scale(1.06); text-shadow: 0 0 20px rgba(99, 102, 241, 0.6), 0 0 30px rgba(99, 102, 241, 0.4); }
+  100% { transform: scale(1); text-shadow: 0 0 10px rgba(99, 102, 241, 0.2); }
+}
+
+.timer-value.timer-running {
+  animation: timerPulse 1s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--accent-primary) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .guide-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+}

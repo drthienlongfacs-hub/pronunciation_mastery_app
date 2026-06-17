@@ -19,6 +19,17 @@ const state = {
   sessionStart: null,
   accumulatedTranscript: '',
   currentSessionTranscript: '',
+  
+  // Set Tracker state variables
+  expandedExerciseId: null,
+  activeTimerInterval: null,
+  activeTimerRemaining: 0,
+  activeTimerExerciseId: null,
+  activeBreathingInterval: null,
+  breathingPhase: null,
+  breathingSecondsRemaining: 0,
+  breathingCycleCount: 0,
+  activeBreathingExerciseId: null
 };
 
 // ── Tab Navigation ────────────────────────────────────────────
@@ -1453,27 +1464,125 @@ function renderPracticeTracker() {
   container.innerHTML = exercises.map(ex => {
     const completed = state.completedSets[ex.id] || 0;
     const isDone = completed >= ex.targetSets;
+    const isExpanded = state.expandedExerciseId === ex.id;
+    const guide = window.EXERCISES_GUIDES ? window.EXERCISES_GUIDES[ex.id] : null;
     
-    const cardClass = isDone ? 'practice-item done' : 'practice-item';
+    let cardClass = isDone ? 'practice-item done' : 'practice-item';
+    if (isExpanded) cardClass += ' expanded';
     const badgeColor = isDone ? 'var(--accent-green)' : 'var(--accent-primary)';
     
-    return `
-      <div class="${cardClass}" style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);border-radius:var(--radius-md);gap:12px;">
+    const isTimerRunningForThis = state.activeTimerExerciseId === ex.id;
+    const isBreathingRunningForThis = state.activeBreathingExerciseId === ex.id;
+    
+    // Header row HTML
+    const headerHtml = `
+      <div class="practice-header" onclick="toggleExerciseAccordion('${ex.id}')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;width:100%;">
         <div style="flex:1;text-align:left;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-weight:600;font-size:0.95rem;color:var(--text-primary);">${ex.name}</span>
-            <span style="font-size:0.75rem;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.05);color:var(--text-accent);text-transform:capitalize;">${ex.type}</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span class="practice-name" style="font-weight:700;font-size:0.95rem;color:var(--text-primary);">${ex.name}</span>
+            <span style="font-size:0.72rem;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.05);color:var(--text-accent);text-transform:capitalize;">${ex.type}</span>
           </div>
           <p style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;">${ex.desc}</p>
         </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
-          <span style="font-family:var(--font-mono);font-size:0.85rem;padding:4px 8px;border-radius:var(--radius-sm);background:${badgeColor};color:white;font-weight:600;">
+        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;" onclick="event.stopPropagation();">
+          <span class="set-badge ${isDone ? 'completed' : ''}" style="font-family:var(--font-mono);font-size:0.82rem;padding:4px 8px;border-radius:var(--radius-sm);background:${isDone ? 'var(--accent-green-glow)' : 'rgba(255,255,255,0.03)'};border:1px solid ${isDone ? 'var(--accent-green)' : 'var(--border-subtle)'};color:${isDone ? 'var(--accent-green)' : 'var(--text-secondary)'};font-weight:600;">
             ${completed} / ${ex.targetSets} set
           </span>
-          <button class="btn btn-sm btn-primary" onclick="completeSet('${ex.id}', ${ex.targetSets})" ${isDone ? 'style="background:var(--accent-green);border-color:var(--accent-green);cursor:default;"' : ''}>
+          <button class="btn btn-sm btn-primary btn-complete-set" onclick="completeSet('${ex.id}', ${ex.targetSets})" ${isDone ? 'disabled style="background:var(--accent-green-glow);border-color:var(--accent-green);color:var(--accent-green);cursor:default;"' : ''}>
             ${isDone ? '✅ Đạt' : '＋ Set'}
           </button>
         </div>
+      </div>
+    `;
+
+    // Extended guide details HTML
+    let guidePanelHtml = '';
+    if (guide && isExpanded) {
+      let interactiveToolHtml = '';
+      
+      if (guide.breathingPattern) {
+        const patternStr = guide.breathingPattern.join('-');
+        const isRunning = isBreathingRunningForThis;
+        
+        interactiveToolHtml = `
+          <div class="interactive-tool-box" style="margin-top:15px;padding:15px;background:rgba(0,0,0,0.25);border-radius:var(--radius-md);border:1px solid rgba(255,255,255,0.05);width:100%;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+              <span style="font-size:0.85rem;font-weight:600;color:var(--text-accent);">🫁 Bộ đếm thở sinh học (Hít-Nín-Thở: ${patternStr} giây)</span>
+              <span style="font-size:0.8rem;color:var(--text-secondary);">Nhịp hiện tại: <strong id="breath-cycle-counter" style="color:var(--accent-primary);font-size:1rem;font-family:var(--font-mono);">${isRunning ? state.breathingCycleCount : 0}</strong> / 10</span>
+            </div>
+            
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:15px 0;gap:12px;">
+              <div class="breathing-circle-container" style="height:120px;display:flex;align-items:center;justify-content:center;position:relative;width:100%;">
+                <div id="breathing-guide-circle" class="breathing-circle ${isRunning ? state.breathingPhase : ''}" style="width:55px;height:55px;border-radius:50%;background:radial-gradient(circle, var(--accent-glow) 0%, var(--accent-primary) 100%);box-shadow:0 0 20px var(--accent-glow);transition: all 1s ease-in-out;"></div>
+                <div id="breathing-timer-text" style="position:absolute;font-family:var(--font-mono);font-size:1.1rem;font-weight:700;color:white;text-shadow:0 2px 4px rgba(0,0,0,0.6);">
+                  ${isRunning ? `${state.breathingSecondsRemaining}s` : 'Sẵn sàng'}
+                </div>
+              </div>
+              
+              <div id="breathing-phase-label" style="font-size:0.85rem;font-weight:700;color:var(--text-primary);min-height:20px;text-transform:uppercase;letter-spacing:1px;text-align:center;">
+                ${isRunning ? getBreathingPhaseVietnamese(state.breathingPhase) : 'Nhấn nút bên dưới để bắt đầu tập'}
+              </div>
+              
+              <button class="btn btn-sm ${isRunning ? 'btn-secondary' : 'btn-accent'}" onclick="toggleBreathingGuide('${ex.id}', [${guide.breathingPattern.join(',')}])" style="font-size:0.8rem;padding:5px 12px;">
+                ${isRunning ? '⏹ Dừng tập' : '▶ Bắt đầu tập (Đủ 10 nhịp = 1 Set)'}
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (guide.duration) {
+        const isRunning = isTimerRunningForThis;
+        const totalDuration = guide.duration;
+        const currentRemaining = isRunning ? state.activeTimerRemaining : totalDuration;
+        
+        interactiveToolHtml = `
+          <div class="interactive-tool-box" style="margin-top:15px;padding:15px;background:rgba(0,0,0,0.25);border-radius:var(--radius-md);border:1px solid rgba(255,255,255,0.05);width:100%;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <span style="font-size:0.85rem;font-weight:600;color:var(--text-accent);">⏱️ Bộ đếm thời gian luyện tập</span>
+              <span style="font-size:0.8rem;color:var(--text-secondary);">${isRunning ? 'Đang đếm ngược...' : 'Sẵn sàng'}</span>
+            </div>
+            
+            <div style="display:flex;align-items:center;justify-content:center;gap:20px;padding:10px 0;">
+              <div class="timer-value ${isRunning ? 'timer-running' : ''}" style="font-family:var(--font-mono);font-size:2.2rem;font-weight:700;color:${isRunning ? 'var(--accent-primary)' : 'white'};text-shadow:0 0 10px rgba(99,102,241,0.2);min-width:75px;text-align:center;">
+                ${currentRemaining}s
+              </div>
+              
+              <button class="btn btn-sm ${isRunning ? 'btn-secondary' : 'btn-accent'}" onclick="toggleExerciseTimer('${ex.id}', ${totalDuration})" style="font-size:0.8rem;padding:6px 14px;">
+                ${isRunning ? '⏹ Dừng đếm' : '▶ Bắt đầu (Đếm ngược ' + totalDuration + 's)'}
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      guidePanelHtml = `
+        <div class="practice-guide-panel" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.05);text-align:left;width:100%;">
+          <div class="guide-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:12px;">
+            <div>
+              <h5 class="guide-section-title" style="font-size:0.75rem;font-weight:700;color:var(--text-accent);margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase;">🔬 Cơ sở khoa học</h5>
+              <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.45;margin:0;">${guide.science}</p>
+            </div>
+            <div>
+              <h5 class="guide-section-title" style="font-size:0.75rem;font-weight:700;color:var(--accent-red);margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase;">⚠️ Lỗi sai cần tránh</h5>
+              <ul class="guide-pitfalls-list" style="margin:0;padding-left:14px;font-size:0.8rem;color:var(--text-secondary);line-height:1.45;">
+                ${guide.pitfalls.map(p => `<li>${p}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <h5 class="guide-section-title" style="font-size:0.75rem;font-weight:700;color:var(--accent-green);margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase;">📋 Các bước thực hiện</h5>
+            <ol class="guide-steps-list" style="margin:0;padding-left:14px;font-size:0.8rem;color:var(--text-secondary);line-height:1.45;">
+              ${guide.steps.map(s => `<li>${s}</li>`).join('')}
+            </ol>
+          </div>
+          ${interactiveToolHtml}
+        </div>
+      `;
+    }
+
+    return `
+      <div id="ex-card-${ex.id}" class="${cardClass}" style="display:flex;flex-direction:column;align-items:flex-start;padding:14px;background:rgba(255,255,255,0.015);border:1px solid var(--border-subtle);border-radius:var(--radius-md);gap:0;transition:all 0.3s ease;width:100%;margin-bottom:2px;">
+        ${headerHtml}
+        ${guidePanelHtml}
       </div>
     `;
   }).join('');
@@ -1483,9 +1592,187 @@ function completeSet(exerciseId, targetSets) {
   const current = state.completedSets[exerciseId] || 0;
   if (current < targetSets) {
     state.completedSets[exerciseId] = current + 1;
+    playCompletionBeep();
     saveState();
     updateDashboard();
     renderPracticeTracker();
+  }
+}
+
+// ── Interactive Guides Helpers ─────────────────────────────────
+function getBreathingPhaseVietnamese(phase) {
+  switch (phase) {
+    case 'inhale': return '🌬️ Hít vào... (Bụng phình)';
+    case 'hold': return '🧘 Nín giữ hơi... (Cân bằng)';
+    case 'exhale': return '💨 Thở ra chậm... (Bụng xẹp)';
+    default: return 'Chuẩn bị bắt đầu';
+  }
+}
+
+function toggleExerciseAccordion(exerciseId) {
+  state.expandedExerciseId = state.expandedExerciseId === exerciseId ? null : exerciseId;
+  // Stop running timers or guides when switching/closing accordion
+  stopExerciseTimer();
+  stopBreathingExercise();
+  renderPracticeTracker();
+}
+
+function toggleExerciseTimer(exerciseId, duration) {
+  if (state.activeTimerExerciseId === exerciseId) {
+    stopExerciseTimer();
+  } else {
+    stopExerciseTimer();
+    stopBreathingExercise();
+    
+    state.activeTimerExerciseId = exerciseId;
+    state.activeTimerRemaining = duration;
+    renderPracticeTracker();
+    
+    state.activeTimerInterval = setInterval(() => {
+      state.activeTimerRemaining--;
+      if (state.activeTimerRemaining <= 0) {
+        const ex = EXERCISES.dailyExercises[state.currentDay]?.find(e => e.id === exerciseId);
+        const targetSets = ex ? ex.targetSets : 3;
+        completeSet(exerciseId, targetSets);
+        stopExerciseTimer();
+      } else {
+        const timerValEl = document.querySelector(`#ex-card-${exerciseId} .timer-value`);
+        if (timerValEl) timerValEl.textContent = `${state.activeTimerRemaining}s`;
+      }
+    }, 1000);
+  }
+}
+
+function stopExerciseTimer() {
+  if (state.activeTimerInterval) {
+    clearInterval(state.activeTimerInterval);
+    state.activeTimerInterval = null;
+  }
+  state.activeTimerExerciseId = null;
+  state.activeTimerRemaining = 0;
+}
+
+function toggleBreathingGuide(exerciseId, pattern) {
+  if (state.activeBreathingExerciseId === exerciseId) {
+    stopBreathingExercise();
+  } else {
+    stopExerciseTimer();
+    stopBreathingExercise();
+    
+    state.activeBreathingExerciseId = exerciseId;
+    state.breathingCycleCount = 0;
+    
+    runBreathingCycle(pattern);
+  }
+}
+
+function runBreathingCycle(pattern) {
+  if (state.activeBreathingExerciseId !== state.expandedExerciseId) return;
+  
+  const [inhale, hold, exhale] = pattern;
+  
+  // Phase 1: Inhale
+  state.breathingPhase = 'inhale';
+  state.breathingSecondsRemaining = inhale;
+  updateBreathingUI();
+  
+  let timer = setInterval(() => {
+    state.breathingSecondsRemaining--;
+    if (state.breathingSecondsRemaining <= 0) {
+      clearInterval(timer);
+      
+      // Phase 2: Hold
+      state.breathingPhase = 'hold';
+      state.breathingSecondsRemaining = hold;
+      updateBreathingUI();
+      
+      timer = setInterval(() => {
+        state.breathingSecondsRemaining--;
+        if (state.breathingSecondsRemaining <= 0) {
+          clearInterval(timer);
+          
+          // Phase 3: Exhale
+          state.breathingPhase = 'exhale';
+          state.breathingSecondsRemaining = exhale;
+          updateBreathingUI();
+          
+          timer = setInterval(() => {
+            state.breathingSecondsRemaining--;
+            if (state.breathingSecondsRemaining <= 0) {
+              clearInterval(timer);
+              
+              // Completed one full cycle
+              state.breathingCycleCount++;
+              const cycleCounter = document.getElementById('breath-cycle-counter');
+              if (cycleCounter) cycleCounter.textContent = state.breathingCycleCount;
+              
+              if (state.breathingCycleCount >= 10) {
+                const ex = EXERCISES.dailyExercises[state.currentDay]?.find(e => e.id === state.activeBreathingExerciseId);
+                const targetSets = ex ? ex.targetSets : 3;
+                completeSet(state.activeBreathingExerciseId, targetSets);
+                stopBreathingExercise();
+              } else {
+                runBreathingCycle(pattern);
+              }
+            } else {
+              updateBreathingUI();
+            }
+          }, 1000);
+          
+          state.activeBreathingInterval = timer;
+        } else {
+          updateBreathingUI();
+        }
+      }, 1000);
+      
+      state.activeBreathingInterval = timer;
+    } else {
+      updateBreathingUI();
+    }
+  }, 1000);
+  
+  state.activeBreathingInterval = timer;
+}
+
+function updateBreathingUI() {
+  const textEl = document.getElementById('breathing-timer-text');
+  const circleEl = document.getElementById('breathing-guide-circle');
+  const labelEl = document.getElementById('breathing-phase-label');
+  
+  if (textEl) textEl.textContent = `${state.breathingSecondsRemaining}s`;
+  if (labelEl) labelEl.textContent = getBreathingPhaseVietnamese(state.breathingPhase);
+  
+  if (circleEl) {
+    circleEl.className = `breathing-circle ${state.breathingPhase}`;
+  }
+}
+
+function stopBreathingExercise() {
+  if (state.activeBreathingInterval) {
+    clearInterval(state.activeBreathingInterval);
+    state.activeBreathingInterval = null;
+  }
+  state.activeBreathingExerciseId = null;
+  state.breathingPhase = null;
+  state.breathingSecondsRemaining = 0;
+  state.breathingCycleCount = 0;
+}
+
+function playCompletionBeep() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+    gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+    oscillator.stop(audioCtx.currentTime + 0.25);
+  } catch (err) {
+    console.warn('Audio Context beep play failed:', err);
   }
 }
 
