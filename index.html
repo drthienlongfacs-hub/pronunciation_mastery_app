@@ -146,6 +146,16 @@
           <span class="ipa">/ˈeθ.ɪks ɪz ðə faʊnˈdeɪ.ʃən əv ˈen.i səˈsteɪ.nə.bəl ˌɔːr.ɡən.aɪˈzeɪ.ʃən/</span>
         </div>
 
+        <div style="margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; font-size:0.85rem;">
+          <span style="color:var(--text-secondary); font-weight:600;">Tốc độ đọc mẫu:</span>
+          <select class="tts-speed-selector" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); color:white; border-radius:4px; padding:4px 8px; font-size:0.85rem; outline:none; cursor:pointer;" onchange="updateGlobalTTSSpeed(this.value)">
+            <option value="0.5">🐢 Rất chậm (0.5x)</option>
+            <option value="0.7">🚗 Chậm (0.7x)</option>
+            <option value="0.85" selected>⚡ Tiêu chuẩn (0.85x)</option>
+            <option value="1.0">✈️ Bình thường (1.0x)</option>
+          </select>
+        </div>
+
         <div class="btn-group" style="justify-content:center;margin-bottom:16px">
           <button class="btn btn-outline" onclick="prevSentence()">← Trước</button>
           <span style="padding:10px;color:var(--text-muted);font-size:0.85rem" id="sentence-counter">1 / 10</span>
@@ -379,6 +389,15 @@
       <div class="card">
         <div class="card-title">🗣️ Shadowing — Luyện theo bài thuyết trình</div>
         <div class="card-description">Nghe TTS đọc câu mẫu → Lặp lại NGAY LẬP TỨC → Ghi âm so sánh. Bắt chước CHÍNH XÁC rhythm, pitch, pace.</div>
+        <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span style="font-size:0.85rem; color:var(--text-secondary); font-weight:600;">Tốc độ đọc mẫu:</span>
+          <select class="tts-speed-selector" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); color:white; border-radius:4px; padding:4px 8px; font-size:0.85rem; outline:none; cursor:pointer;" onchange="updateGlobalTTSSpeed(this.value)">
+            <option value="0.5">🐢 Rất chậm (0.5x)</option>
+            <option value="0.7">🚗 Chậm (0.7x)</option>
+            <option value="0.85" selected>⚡ Tiêu chuẩn (0.85x)</option>
+            <option value="1.0">✈️ Bình thường (1.0x)</option>
+          </select>
+        </div>
       </div>
 
       <div id="shadowingSentences"></div>

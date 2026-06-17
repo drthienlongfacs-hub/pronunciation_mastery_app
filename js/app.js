@@ -29,7 +29,10 @@ const state = {
   breathingPhase: null,
   breathingSecondsRemaining: 0,
   breathingCycleCount: 0,
-  activeBreathingExerciseId: null
+  activeBreathingExerciseId: null,
+  
+  // TTS configuration
+  ttsSpeed: parseFloat(localStorage.getItem('ttsSpeed') || '0.85')
 };
 
 // ── Tab Navigation ────────────────────────────────────────────
@@ -662,7 +665,10 @@ function updateSentenceDisplay() {
   const sentences = EXERCISES.shadowingSentences.sentences;
   const s = sentences[state.currentSentenceIdx];
   const target = document.getElementById('recorder-target');
-  target.innerHTML = `${s.text}<span class="ipa" style="font-size:0.8rem;margin-top:8px;display:block;color:var(--text-secondary)">${s.tips}</span>`;
+  
+  const ipaHtml = s.ipa ? `<div class="ipa" style="font-size:0.9rem;margin-top:6px;color:var(--accent-secondary);font-weight:500;">${s.ipa}</div>` : '';
+  target.innerHTML = `${s.text}${ipaHtml}<span class="ipa" style="font-size:0.8rem;margin-top:8px;display:block;color:var(--text-secondary)">💡 ${s.tips}</span>`;
+  
   document.getElementById('sentence-counter').textContent = 
     `${state.currentSentenceIdx + 1} / ${sentences.length}`;
   
@@ -706,7 +712,7 @@ function toggleHVPT() {
   }
 }
 
-function speak(text, rate = 0.85, voice) {
+function speak(text, rate, voice) {
   if (currentAudio) {
     currentAudio.pause();
     currentAudio = null;
@@ -721,16 +727,29 @@ function speak(text, rate = 0.85, voice) {
     hvptIdx++;
   }
 
+  const activeRate = rate !== undefined ? rate : (state.ttsSpeed || 0.85);
+
   const encodedText = encodeURIComponent(text);
   const voiceParam = voice ? `&voice=${encodeURIComponent(voice)}` : '';
-  const audioUrl = `${API_BASE}/api/tts?text=${encodedText}&rate=${rate}${voiceParam}`;
+  const audioUrl = `${API_BASE}/api/tts?text=${encodedText}&rate=${activeRate}${voiceParam}`;
 
   const audio = new Audio(audioUrl);
   currentAudio = audio;
 
   audio.play().catch(err => {
     console.warn('Dynamic Edge-TTS playback failed, falling back to Web Speech API', err);
-    fallbackWebSpeech(text, rate);
+    fallbackWebSpeech(text, activeRate);
+  });
+}
+
+function updateGlobalTTSSpeed(value) {
+  const speed = parseFloat(value);
+  state.ttsSpeed = speed;
+  localStorage.setItem('ttsSpeed', speed);
+  
+  // Đồng bộ tất cả các select box tốc độ trên trang
+  document.querySelectorAll('.tts-speed-selector').forEach(select => {
+    select.value = value;
   });
 }
 
@@ -1347,22 +1366,27 @@ function renderBreathingExercises() {
 // ── Shadowing ─────────────────────────────────────────────────
 function renderShadowing() {
   const container = document.getElementById('shadowingSentences');
-  container.innerHTML = EXERCISES.shadowingSentences.sentences.map((s, i) => `
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div class="card-title" style="margin-bottom:0">
-          🗣️ Câu ${i + 1}
+  if (!container) return;
+  container.innerHTML = EXERCISES.shadowingSentences.sentences.map((s, i) => {
+    const ipaHtml = s.ipa ? `<div class="ipa" style="font-size:0.85rem;margin-top:4px;margin-bottom:8px;color:var(--accent-secondary);font-weight:500;">${s.ipa}</div>` : '';
+    return `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="card-title" style="margin-bottom:0">
+            🗣️ Câu ${i + 1}
+          </div>
+          <div style="font-size:0.8rem;color:var(--text-muted)">Độ khó: ${'⭐'.repeat(s.difficulty)}</div>
         </div>
-        <div style="font-size:0.8rem;color:var(--text-muted)">Độ khó: ${'⭐'.repeat(s.difficulty)}</div>
+        <div class="target-text" style="font-size:1.1rem;margin-bottom:4px">${s.text}</div>
+        ${ipaHtml}
+        <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px">💡 ${s.focus} <span style="color:var(--text-muted)">(${s.tips || ''})</span></div>
+        <div class="btn-group">
+          <button class="btn btn-primary btn-sm" onclick="speak('${s.text.replace(/'/g, "\\'")}')">🔊 Nghe mẫu</button>
+          <button class="btn btn-outline btn-sm" onclick="startShadowingRecord(${i})">🎙️ Luyện nói</button>
+        </div>
       </div>
-      <div class="target-text" style="font-size:1.1rem;margin-bottom:12px">${s.text}</div>
-      <div style="font-size:0.85rem;color:var(--accent-secondary);margin-bottom:12px">💡 ${s.focus}</div>
-      <div class="btn-group">
-        <button class="btn btn-primary btn-sm" onclick="speak('${s.text.replace(/'/g, "\\'")}')">🔊 Nghe mẫu</button>
-        <button class="btn btn-outline btn-sm" onclick="startShadowingRecord(${i})">🎙️ Luyện nói</button>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function startShadowingRecord(idx) {
@@ -1879,6 +1903,11 @@ async function init() {
   renderSchedule();
   renderLecture();
   renderPracticeTracker();
+  
+  // Đồng bộ giá trị chọn tốc độ đọc mẫu khi khởi chạy
+  document.querySelectorAll('.tts-speed-selector').forEach(select => {
+    select.value = state.ttsSpeed || '0.85';
+  });
   
   // Save notes dynamically
   const notesArea = document.getElementById('pronunciationNotes');

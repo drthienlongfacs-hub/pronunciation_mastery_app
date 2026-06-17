@@ -186,61 +186,71 @@ const EXERCISES = {
         text: "Good morning, teacher. My name is Le Trong Thien Long.",
         focus: "Greeting + proper noun",
         difficulty: 1,
-        tips: "Ngắt nhịp sau 'teacher'. Nói tên rõ ràng, chậm."
+        tips: "Ngắt nhịp sau 'teacher'. Nói tên rõ ràng, chậm.",
+        ipa: "/ɡʊd ˈmɔːr.nɪŋ, ˈtiː.tʃər. maɪ neɪm ɪz Le Trong Thien Long./"
       },
       {
         text: "I am a surgeon and urologist, holding a Master of Science degree.",
         focus: "Medical terminology + final /st/ in 'urologist'",
         difficulty: 2,
-        tips: "u-ROL-o-gist: nhấn âm 2. MAS-ter: bật /t/ rõ."
+        tips: "u-ROL-o-gist: nhấn âm 2. MAS-ter: bật /t/ rõ.",
+        ipa: "/aɪ æm ə ˈsɜːr.dʒən ənd jʊˈrɑː.lə.dʒɪst, ˈhəʊl.dɪŋ ə ˈmæs.tər əv ˈsaɪ.əns dɪˈɡriː./"
       },
       {
         text: "Ethics is the foundation of any sustainable organization.",
         focus: "KEY SENTENCE — /θ/ in ethics, final /n/ in organization",
         difficulty: 3,
-        tips: "ETH-ics: lưỡi giữa răng! foun-DA-tion: nhấn âm 2."
+        tips: "ETH-ics: lưỡi giữa răng! foun-DA-tion: nhấn âm 2.",
+        ipa: "/ˈeθ.ɪks ɪz ðə faʊnˈdeɪ.ʃən əv ˈen.i səˈsteɪ.nə.bəl ˌɔːr.ɡən.aɪˈzeɪ.ʃən/"
       },
       {
         text: "Business ethics builds long-term reputation and stakeholder trust.",
         focus: "builds /ldz/, trust /st/",
         difficulty: 3,
-        tips: "BUILDS: giữ /l/ + /d/ + /z/. TRUST: bật /st/ cuối."
+        tips: "BUILDS: giữ /l/ + /d/ + /z/. TRUST: bật /st/ cuối.",
+        ipa: "/ˈbɪz.nɪs ˈeθ.ɪks bɪldz ˈlɔːŋ.tɜːrm ˌrep.jəˈteɪ.ʃən ənd ˈsteɪk.həʊl.dər trʌst/"
       },
       {
         text: "It ensures strict legal compliance, avoiding the catastrophic risk of lawsuits.",
         focus: "risk /sk/, strict /kt/",
         difficulty: 4,
-        tips: "RISK: giữ /s/ + /k/. STRICT: bật /kt/. Catastrophic: ca-ta-STROPH-ic."
+        tips: "RISK: giữ /s/ + /k/. STRICT: bật /kt/. Catastrophic: ca-ta-STROPH-ic.",
+        ipa: "/ɪt ɪnˈʃʊrz strɪkt ˈliː.ɡəl kəmˈplaɪ.əns, əˈvɔɪ.dɪŋ ðə ˌkæt.əˈstrɑː.fɪk rɪsk əv ˈlɔː.suːts/"
       },
       {
         text: "Ethics drives sustainable value over short-term greed.",
         focus: "drives /vz/, greed vs breed",
         difficulty: 3,
-        tips: "DRIVES: giữ /v/ + /z/. GREED: /ɡ/ không phải /b/."
+        tips: "DRIVES: giữ /v/ + /z/. GREED: /ɡ/ không phải /b/.",
+        ipa: "/ˈeθ.ɪks draɪvz səˈsteɪ.nə.bəl ˈvæl.juː ˈəʊ.vər ʃɔːrt-tɜːrm ɡriːd/"
       },
       {
         text: "They aim to guide corporate decision-making.",
         focus: "Stress-timing, corporate stress",
         difficulty: 4,
-        tips: "THEY AIM: nối âm. COR-po-rate: 3 âm tiết, nhấn 1."
+        tips: "THEY AIM: nối âm. COR-po-rate: 3 âm tiết, nhấn 1.",
+        ipa: "/ðeɪ eɪm tə ɡaɪd ˈkɔːr.pər.ət dɪˈsɪʒ.ən.meɪ.kɪŋ/"
       },
       {
         text: "Promoting ethics helps company success by creating distinct competitive advantages.",
         focus: "distinct /ŋkt/, competitive stress",
         difficulty: 5,
-        tips: "dis-TINCT: bật /ŋkt/. com-PET-i-tive: nhấn âm 2."
+        tips: "dis-TINCT: bật /ŋkt/. com-PET-i-tive: nhấn âm 2.",
+        ipa: "/prəˈməʊt.ɪŋ ˈeθ.ɪks helps ˈkʌm.pə.ni səkˈses baɪ kriˈeɪt.ɪŋ dɪˈstɪŋkt kəmˈpet.ə.tɪv ædˈvæn.tɪ.dʒɪz/"
       },
       {
         text: "Implement protected whistleblowing channels so employees feel safe to report misconduct.",
         focus: "Complex sentence, linking",
         difficulty: 5,
-        tips: "IM-ple-ment: nhấn âm 1. WHIS-tle-blow-ing: nhấn âm 1."
+        tips: "IM-ple-ment: nhấn âm 1. WHIS-tle-blow-ing: nhấn âm 1.",
+        ipa: "/ˈɪm.plɪ.ment prəˈtek.tɪd ˈwɪs.əl.bləʊ.ɪŋ ˈtʃæn.əlz səʊ ɪmˈplɔɪ.iːz fiːl seɪf tə rɪˈpɔːrt ˌmɪsˈkɑːn.dʌkt/"
       },
       {
         text: "What truly matters is a robust system of organizational accountability and a personal moral compass.",
         focus: "robust /st/, moral compass (NOT Mortal Kombat!)",
         difficulty: 5,
-        tips: "ro-BUST: giữ /st/. MOR-al COM-pass: 2 từ riêng biệt, nhấn âm 1 mỗi từ."
+        tips: "ro-BUST: giữ /st/. MOR-al COM-pass: 2 từ riêng biệt, nhấn âm 1 mỗi từ.",
+        ipa: "/wʌt ˈtruː.li ˈmæt.ərz ɪz ə rəʊˈbʌst ˈsɪs.təm əv ˌɔːr.ɡən.aɪˈzeɪ.ʃən.əl əˌkaʊn.təˈbɪl.ə.ti ənd ə ˈpɜː.sən.əl ˈmɔːr.əl ˈkʌm.pəs/"
       },
       {
         text: "I would like to present a rare case of a patient with large staghorn stones.",
@@ -453,7 +463,15 @@ const EXERCISES = {
         text: "We should respect patient autonomy and maintain high ethical standards.",
         focus: "/kt/ in 'respect', /t/ in 'patient', /θ/ in 'ethical', /st/ in 'standards'",
         difficulty: 5,
-        tips: "respect: bật /kt/. ethical: đặt lưỡi giữa răng. standards: nhấn âm 1."
+        tips: "respect: bật /kt/. ethical: đặt lưỡi giữa răng. standards: nhấn âm 1.",
+        ipa: "/wiː ʃʊd rɪˈspekt ˈpeɪ.ʃənt ɔːˈtɒn.ə.mi ənd meɪnˈteɪn haɪ ˈeθ.ɪ.kəl ˈstæn.dərdz/"
+      },
+      {
+        text: "Christ tries Thrice Thrice thrive tribe Drive she drives she tries she tries twice she tries she's wife Drive she tries she twice she twice",
+        focus: "Tập trung các cụm âm ghép đầu /kr/ /θr/ /tr/ /dr/ /tw/ + âm đuôi xát hữu thanh /vz/",
+        difficulty: 5,
+        tips: "Christ: /kraɪst/, tries: /traɪz/, Thrice: /θraɪs/, thrive: /θraɪv/, drives: /draɪvz/, twice: /twaɪs/.",
+        ipa: "[kraɪst traɪz θraɪs θraɪs θraɪv traɪb draɪv ʃiː draɪvz ʃiː traɪz ʃiː traɪz twaɪs ʃiː traɪz ʃiːz waɪf draɪv ʃiː traɪz ʃiː twaɪs ʃiː twaɪs]"
       }
     ]
   },
