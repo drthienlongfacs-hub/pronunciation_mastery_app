@@ -271,6 +271,189 @@ const EXERCISES = {
         focus: "/θ/ in 'both' and 'ethical', stress in 'obligation', vowel /əʊ/ in 'both'",
         difficulty: 5,
         tips: "both: đặt đầu lưỡi giữa răng thổi hơi nhẹ /θ/. eth-i-cal: đặt lưỡi giữa răng. ob-li-GA-tion: nhấn âm 3."
+      },
+      // ── NHÓM A: LÂM SÀNG & NGOẠI TIẾT NIỆU (MEDICAL & UROLOGICAL PRACTICE) ──
+      {
+        text: "The patient presents with acute urinary retention and requires urgent catheterization.",
+        focus: "/ð/ in 'with', final /st/ in 'presents' and 'catheterization', final /ts/ in 'presents'",
+        difficulty: 3,
+        tips: "presents: phát âm rõ /ts/ ở cuối. catheterization: nhấn âm 4 (za)."
+      },
+      {
+        text: "We performed a laparoscopic nephrectomy to treat the renal cell carcinoma.",
+        focus: "/p/ and /k/ in 'laparoscopic' and 'nephrectomy', stress-timing",
+        difficulty: 4,
+        tips: "neph-REC-to-my: nhấn âm 3. car-ci-NO-ma: nhấn âm 3."
+      },
+      {
+        text: "The cystoscopy revealed multiple bladder stones that need immediate lithotripsy.",
+        focus: "/θ/ in 'lithotripsy', /st/ in 'cystoscopy' and 'stones', final /nz/ in 'stones'",
+        difficulty: 4,
+        tips: "cys-TOS-co-py: nhấn âm 2. lith-o-TRIP-sy: nhấn âm 1, đặt lưỡi giữa răng cho /θ/."
+      },
+      {
+        text: "The surgeon detects a suspicious nodule during the digital rectal examination.",
+        focus: "/ts/ in 'detects', /pt/ in 'examination', /kt/ in 'rectal', voicing",
+        difficulty: 4,
+        tips: "de-TECTS: /kts/ ở cuối. rec-tal: đọc rõ /k/ chặn hơi."
+      },
+      {
+        text: "He treats male infertility and erectile dysfunction with great clinical success.",
+        focus: "/ts/ in 'treats', /ð/ in 'with', final /s/ in 'success', stress-timing",
+        difficulty: 3,
+        tips: "treats: bật /ts/ rõ. erectile: nhấn âm 2 (rec). dysfunction: nhấn âm 2 (func)."
+      },
+      {
+        text: "The post-operative protocol demands strict monitoring of the patient's urine output.",
+        focus: "/kt/ in 'strict', /st/ in 'post' and patient's /ts/",
+        difficulty: 4,
+        tips: "post-operative: nguyên âm đôi /əʊ/. strict: bật /kt/ rõ nét. patient's: bật /ts/."
+      },
+      {
+        text: "We must rule out ureteral obstruction before scheduling the shockwave lithotripsy.",
+        focus: "/st/ in 'must' and 'obstruction', /θ/ in 'lithotripsy'",
+        difficulty: 4,
+        tips: "must: giữ /st/. obstruction: /kt/ ở giữa. lithotripsy: đặt lưỡi giữa răng."
+      },
+      {
+        text: "The robotic prostatectomy accepts the challenge of preserving the pelvic nerves.",
+        focus: "/pts/ in 'accepts', /st/ in 'prostatectomy', final /vz/ in 'nerves'",
+        difficulty: 5,
+        tips: "pros-ta-TEC-to-my: nhấn âm 3. accepts: bật /pts/ rõ nét. nerves: kết thúc bằng âm /z/ rung."
+      },
+      {
+        text: "The department provides advanced training in endoscopic and open surgical procedures.",
+        focus: "/st/ in 'procedures' (/dʒ/), /t/ in 'department', /k/ in 'endoscopic'",
+        difficulty: 4,
+        tips: "de-PART-ment: lướt âm /t/ cuối. endoscopic: nhấn âm 3 (scop)."
+      },
+      {
+        text: "She conducts research on chronic kidney disease and renal transplantation.",
+        focus: "/ts/ in 'conducts', /st/ in 'transplantation', stress-timing",
+        difficulty: 4,
+        tips: "con-DUCTS: bật /kts/. transplantation: nhấn âm 4 (ta)."
+      },
+      // ── NHÓM B: NGHIÊN CỨU & CÔNG BỐ KHOA HỌC (RESEARCH & PUBLICATIONS) ──
+      {
+        text: "The manuscript analyzes the long-term outcomes of robotic-assisted prostate surgery.",
+        focus: "/st/ in 'manuscript' and 'prostate', /z/ in 'analyzes' and outcomes /mz/",
+        difficulty: 4,
+        tips: "man-u-script: bật /pt/ cuối. analyzes: phát âm rõ /z/ ở cuối."
+      },
+      {
+        text: "We found a significant correlation between dietary habits and prostate cancer risk.",
+        focus: "/nt/ in 'significant', /sk/ in 'risk', stress-timing",
+        difficulty: 3,
+        tips: "sig-NIF-i-cant: lướt nhanh. risk: xì /s/ rồi bật /k/ dứt khoát."
+      },
+      {
+        text: "This prospective study accepts the hypothesis and prompts further investigation.",
+        focus: "/pts/ in 'accepts' and 'prompts', /st/ in 'prospective' and 'investigation'",
+        difficulty: 4,
+        tips: "prompts: /m/ + /p/ + /t/ + /s/ cụm cuối. prospective: nhấn âm 2 (spec)."
+      },
+      {
+        text: "The scientific facts support our theory about the pathogenesis of renal stones.",
+        focus: "/kts/ in 'facts', /ts/ in 'support', /θ/ in 'pathogenesis'",
+        difficulty: 4,
+        tips: "facts: bật /kts/. pathogenesis: path-o-GEN-e-sis, đặt lưỡi giữa răng cho /θ/."
+      },
+      {
+        text: "The authors discuss the limitations of their retrospective cohort design.",
+        focus: "/s/ in 'discuss', /ð/ in 'their', /st/ in 'retrospective'",
+        difficulty: 4,
+        tips: "discuss: nhấn âm 2. retrospective: re-tro-SPEC-tive, nhấn âm 3."
+      },
+      {
+        text: "Our primary objective is to evaluate the safety and efficacy of the treatment.",
+        focus: "/kt/ in 'objective', /t/ in 'treatment', stress-timing",
+        difficulty: 3,
+        tips: "ob-JEC-tive: lướt âm /t/ cuối. efficacy: EF-fi-ca-cy, nhấn âm 1."
+      },
+      {
+        text: "The statistical analysis reveals a distinct difference in patient survival rates.",
+        focus: "/st/ in 'statistical' and 'distinct', /ts/ in 'rates'",
+        difficulty: 4,
+        tips: "sta-TIS-ti-cal: nhấn âm 2. distinct: bật /ŋkt/ rõ ràng. rates: bật /ts/."
+      },
+      {
+        text: "We must submit the abstract to the international urological conference next week.",
+        focus: "/st/ in 'must', /kt/ in 'abstract' and 'next'",
+        difficulty: 4,
+        tips: "abstract: nhấn âm 1 (ab), bật /kt/ cuối. next: bật /kst/."
+      },
+      {
+        text: "The research team conducts a systematic review of the published literature.",
+        focus: "/ts/ in 'conducts', /st/ in 'systematic' and 'published' (/ʃt/)",
+        difficulty: 4,
+        tips: "sys-te-MAT-ic: nhấn âm 3. published: /ʃ/ kết hợp /t/ ở cuối."
+      },
+      {
+        text: "These data-driven insights suggest a shift toward personalized medicine.",
+        focus: "/ð/ in 'These', /ts/ in 'insights', /st/ in 'suggest'",
+        difficulty: 3,
+        tips: "These: rung /ð/. insights: bật /ts/ dứt khoát. suggest: sug-GEST, nhấn âm 2."
+      },
+      // ── NHÓM C: Y ĐỨC & QUẢN TRỊ BỆNH VIỆN (BUSINESS ETHICS & GOVERNANCE) ──
+      {
+        text: "The hospital enforces a strict code of ethics to prevent professional misconduct.",
+        focus: "/kt/ in 'strict' and 'misconduct', /θ/ in 'ethics'",
+        difficulty: 4,
+        tips: "strict: bật /kt/. misconduct: nhấn âm 2 (con), bật /kt/ cuối."
+      },
+      {
+        text: "Business ethics builds trust, which attracts more stakeholders to our project.",
+        focus: "/ldz/ in 'builds', /st/ in 'trust', /kts/ in 'attracts'",
+        difficulty: 4,
+        tips: "builds: giữ /ldz/. attracts: bật /kts/. stakeholders: nhấn âm 1."
+      },
+      {
+        text: "We must protect patient privacy and comply with data protection laws.",
+        focus: "/st/ in 'must' and 'protect', /ð/ in 'with'",
+        difficulty: 3,
+        tips: "must: giữ /st/. protect: bật /kt/ cuối. with: đặt lưỡi giữa răng."
+      },
+      {
+        text: "The organization rewards honest feedback and prohibits any form of retaliation.",
+        focus: "/st/ in 'honest', /z/ in 'rewards', word stress",
+        difficulty: 4,
+        tips: "HON-est: nhấn âm 1. re-tal-i-A-tion: nhấn âm 4 (a)."
+      },
+      {
+        text: "A robust compliance system minimizes the catastrophic risk of legal lawsuits.",
+        focus: "/st/ in 'robust' and 'system', /sk/ in 'risk', /ts/ in 'lawsuits'",
+        difficulty: 4,
+        tips: "robust: nhấn âm 2. lawsuits: nhấn âm 1, bật /ts/ cuối."
+      },
+      {
+        text: "Our board of directors accepts the responsibility for financial accountability.",
+        focus: "/pts/ in 'accepts', /st/ in 'responsibility'",
+        difficulty: 5,
+        tips: "accepts: bật /pts/. responsibility: nhấn âm 5 (bi-li-ty)."
+      },
+      {
+        text: "The whistleblowing channel ensures that employees feel safe to report conflicts.",
+        focus: "/ts/ in 'conflicts', /ð/ in 'that', /st/ in 'whistleblowing'",
+        difficulty: 4,
+        tips: "conflicts: con-FLICTS, bật /kts/ ở cuối. whistle: câm /t/."
+      },
+      {
+        text: "They promote transparency and sustainable development across all departments.",
+        focus: "/st/ in 'departments' (/ts/), /ð/ in 'They'",
+        difficulty: 4,
+        tips: "departments: bật /ts/ ở cuối. development: nhấn âm 2 (vel)."
+      },
+      {
+        text: "Professional integrity is the core value that guides our corporate decisions.",
+        focus: "/ð/ in 'that', /z/ in 'guides' and 'decisions'",
+        difficulty: 4,
+        tips: "in-TEG-ri-ty: nhấn âm 2. corporate: 3 âm tiết, nhấn 1."
+      },
+      {
+        text: "We should respect patient autonomy and maintain high ethical standards.",
+        focus: "/kt/ in 'respect', /t/ in 'patient', /θ/ in 'ethical', /st/ in 'standards'",
+        difficulty: 5,
+        tips: "respect: bật /kt/. ethical: đặt lưỡi giữa răng. standards: nhấn âm 1."
       }
     ]
   },
