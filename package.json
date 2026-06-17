@@ -1,0 +1,15 @@
+{
+  "name": "pronunciation-mastery-app",
+  "version": "1.0.0",
+  "description": "Full-Stack English Pronunciation Mastery Application for Dr. Le Trong Thien Long",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "author": "Dr. Long & Antigravity AI",
+  "license": "MIT"
+}
