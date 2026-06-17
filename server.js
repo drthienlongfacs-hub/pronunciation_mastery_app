@@ -146,6 +146,22 @@ function getMechanicalFeedback(word) {
 
   // 1. TỪ ĐIỂN CẤU ÂM CHI TIẾT CHO 10 CÂU SHADOWING CỦA BS. LONG
   const SHADOWING_WORDS_DICT = {
+    // Từ vựng lâm sàng/y đức mới bổ sung (Kiểm duyệt kỹ lưỡng)
+    rare: '👅 [Phát âm /reər/]: Nguyên âm đôi bắt đầu từ âm /e/ lướt nhẹ sang âm schwa /ə/ và cong nhẹ đầu lưỡi ở cuối để tạo âm /r/ chuẩn Mỹ.',
+    staghorn: '🩺 [Thuật ngữ /ˈstæɡ.hɔːn/]: Đọc rõ âm chặn hữu thanh /ɡ/ ở cuống lưỡi của stag trước khi phát âm horn.',
+    laparoscopic: '🩺 [Thuật ngữ /ˌlæp.ər.əˈskɒp.ɪk/]: Trọng âm phụ ở âm 1, trọng âm chính nhấn ở âm tiết 4 SKOP /skɒp/. Bật hơi phụ âm /k/ mạnh ở cuối.',
+    prostate: '🩺 [Thuật ngữ /ˈprɒs.teɪt/]: Trọng âm nhấn âm tiết đầu PROS. Chú ý phụ âm cuối /t/ bật hơi dứt khoát. Tránh đọc thành "pro-state".',
+    discuss: '🥁 [Trọng âm từ /dɪˈskʌs/]: Trọng âm nhấn âm 2. Chú ý âm ma sát xì /s/ kéo dài rõ rệt ở cuối.',
+    benefits: '🦷 [Cụm phụ âm cuối /ts/]: Phát âm /ˈben.ɪ.fɪts/. Chú ý đặt đầu lưỡi chặn hơi tại lợi rồi nhả xát nhanh âm /s/ tạo âm bật ma sát /ts/ ở cuối.',
+    accepts: '🦷 [Cụm phụ âm cuối phức tạp /pts/]: Phát âm /əkˈsepts/. Kỹ thuật build-up: accept -> accepts. Bật nhẹ /p/ bằng môi, chặn nhẹ /t/ rồi thổi hơi xì /s/ dứt khoát.',
+    facts: '🦷 [Cụm phụ âm cuối phức tạp /kts/]: Phát âm /fækts/. Cơ học: bật nhẹ âm chặn /k/ ở ngạc mềm rồi nhả nhanh sang âm bật ma sát /ts/. Người Việt rất hay nuốt âm /k/.',
+    supports: '🦷 [Cụm phụ âm cuối /ts/]: Phát âm /səˈpɔːts/. Chú ý âm bật /p/ ở đầu âm tiết 2 và âm bật ma sát /ts/ ở cuối.',
+    significant: '🥁 [Trọng âm từ /sɪɡˈnɪf.ɪ.kənt/]: Trọng âm nhấn âm 2 NIF. Đọc lướt nhanh âm 1 và bật nhẹ âm cuối /t/.',
+    "post-operative": '🥁 [Trọng âm từ /pəʊst ˈɒp.ər.ə.tɪv/]: Từ ghép có nhịp điệu hơi phức tạp. Chú ý cụm /st/ ở post và âm /v/ ma sát răng môi nhẹ ở cuối.',
+    privacy: '🥁 [Trọng âm từ /ˈpraɪ.və.si/]: Trọng âm nhấn âm 1 PRI. Tránh đọc nhầm thành pri-va-cy giọng Việt bẹt.',
+    both: '🦷 [Âm răng-lưỡi vô thanh /θ/ ở cuối]: Phát âm /bəʊθ/. Cơ học: Đặt đầu lưỡi nằm nhẹ giữa răng cửa trên và dưới. Thổi hơi nhẹ qua khe răng-lưỡi ở cuối để tạo âm ma sát vô thanh.',
+    obligation: '🥁 [Trọng âm từ /ˌɒb.lɪˈɡeɪ.ʃən/]: Trọng âm nhấn âm 3 GA /ɡeɪ/. Chú ý âm cuối lướt nhẹ /ʃən/.',
+
     // Câu 1
     good: '🦷 [Âm bật hữu thanh /d/ ở cuối]: Đầu lưỡi chạm ngạc cứng chặn luồng hơi, rung nhẹ dây thanh quản rồi bật nhẹ hơi tạo âm /d/. Tránh đọc thành "gút" bị nuốt mất âm cuối.',
     morning: '👅 [Âm mũi /ŋ/ ở cuối]: Phát âm /ˈmɔː.nɪŋ/. Cơ học: Hạ ngạc mềm xuống, nâng cuống lưỡi chạm ngạc mềm chặn hoàn toàn đường miệng để luồng hơi đi lên và vang qua khoang mũi.',
@@ -277,23 +293,30 @@ app.get('/api/tts', (req, res) => {
   const hash = crypto.createHash('md5').update(`${text}_${voice}_${rateStr}`).digest('hex');
   const cachePath = path.join(CACHE_DIR, `${hash}.mp3`);
 
-  if (fs.existsSync(cachePath)) {
+  // Cache hit — nhưng chỉ dùng nếu file KHÔNG rỗng (tránh phục vụ file lỗi)
+  if (fs.existsSync(cachePath) && fs.statSync(cachePath).size > 0) {
     return res.sendFile(cachePath);
   }
 
   const edgeTtsCli = '/Users/mac/Library/Python/3.9/bin/edge-tts';
-  execFile(edgeTtsCli, [
-    '--text', text,
-    '--voice', voice,
-    `--rate=${rateStr}`,
-    '--write-media', cachePath
-  ], (error, stdout, stderr) => {
-    if (error) {
-      console.error('Edge-TTS generation error:', error, stderr);
-      return res.status(500).json({ error: 'Failed to generate speech' });
-    }
-    res.sendFile(cachePath);
-  });
+  // edge-tts thi thoảng trả "NoAudioReceived" tạm thời -> thử lại tối đa 3 lần
+  function attempt(triesLeft) {
+    try { if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath); } catch (e) {}
+    execFile(edgeTtsCli, [
+      '--text', text,
+      '--voice', voice,
+      `--rate=${rateStr}`,
+      '--write-media', cachePath
+    ], (error) => {
+      const ok = !error && fs.existsSync(cachePath) && fs.statSync(cachePath).size > 0;
+      if (ok) return res.sendFile(cachePath);
+      try { if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath); } catch (e) {} // xóa file rỗng
+      if (triesLeft > 0) return setTimeout(() => attempt(triesLeft - 1), 400);
+      console.error('Edge-TTS generation error (đã thử lại):', error && error.message);
+      res.status(500).json({ error: 'Failed to generate speech' });
+    });
+  }
+  attempt(2);
 });
 
 // ── API: Phoneme-level Pronunciation Scoring (mã nguồn mở, miễn phí) ──
@@ -333,8 +356,8 @@ app.post('/api/phoneme-score', (req, res) => {
   // Lưu audio người dùng -> wav 16k
   const stamp = crypto.randomBytes(6).toString('hex');
   const ext = (mimeType && mimeType.includes('wav')) ? 'wav' : 'webm';
-  const rawPath = path.join(CACHE_DIR, `user_${stamp}.${ext}`);
-  const userWav = path.join(CACHE_DIR, `user_${stamp}.wav`);
+  const rawPath = path.join(CACHE_DIR, `user_${stamp}_raw.${ext}`);
+  const userWav = path.join(CACHE_DIR, `user_${stamp}_16k.wav`);
   const cleanup = () => [rawPath, userWav].forEach(f => { try { fs.unlinkSync(f); } catch (e) {} });
 
   try {

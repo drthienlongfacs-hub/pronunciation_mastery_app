@@ -501,6 +501,22 @@ function levenshtein(a, b) {
 }
 
 const SHADOWING_WORDS_DICT = {
+  // Từ vựng lâm sàng/y đức mới bổ sung (Kiểm duyệt kỹ lưỡng)
+  rare: '👅 [Phát âm /reər/]: Nguyên âm đôi bắt đầu từ âm /e/ lướt nhẹ sang âm schwa /ə/ và cong nhẹ đầu lưỡi ở cuối để tạo âm /r/ chuẩn Mỹ.',
+  staghorn: '🩺 [Thuật ngữ /ˈstæɡ.hɔːn/]: Đọc rõ âm chặn hữu thanh /ɡ/ ở cuống lưỡi của stag trước khi phát âm horn.',
+  laparoscopic: '🩺 [Thuật ngữ /ˌlæp.ər.əˈskɒp.ɪk/]: Trọng âm phụ ở âm 1, trọng âm chính nhấn ở âm tiết 4 SKOP /skɒp/. Bật hơi phụ âm /k/ mạnh ở cuối.',
+  prostate: '🩺 [Thuật ngữ /ˈprɒs.teɪt/]: Trọng âm nhấn âm tiết đầu PROS. Chú ý phụ âm cuối /t/ bật hơi dứt khoát. Tránh đọc thành "pro-state".',
+  discuss: '🥁 [Trọng âm từ /dɪˈskʌs/]: Trọng âm nhấn âm 2. Chú ý âm ma sát xì /s/ kéo dài rõ rệt ở cuối.',
+  benefits: '🦷 [Cụm phụ âm cuối /ts/]: Phát âm /ˈben.ɪ.fɪts/. Chú ý đặt đầu lưỡi chặn hơi tại lợi rồi nhả xát nhanh âm /s/ tạo âm bật ma sát /ts/ ở cuối.',
+  accepts: '🦷 [Cụm phụ âm cuối phức tạp /pts/]: Phát âm /əkˈsepts/. Kỹ thuật build-up: accept -> accepts. Bật nhẹ /p/ bằng môi, chặn nhẹ /t/ rồi thổi hơi xì /s/ dứt khoát.',
+  facts: '🦷 [Cụm phụ âm cuối phức tạp /kts/]: Phát âm /fækts/. Cơ học: bật nhẹ âm chặn /k/ ở ngạc mềm rồi nhả nhanh sang âm bật ma sát /ts/. Người Việt rất hay nuốt âm /k/.',
+  supports: '🦷 [Cụm phụ âm cuối /ts/]: Phát âm /səˈpɔːts/. Chú ý âm bật /p/ ở đầu âm tiết 2 và âm bật ma sát /ts/ ở cuối.',
+  significant: '🥁 [Trọng âm từ /sɪɡˈnɪf.ɪ.kənt/]: Trọng âm nhấn âm 2 NIF. Đọc lướt nhanh âm 1 và bật nhẹ âm cuối /t/.',
+  "post-operative": '🥁 [Trọng âm từ /pəʊst ˈɒp.ər.ə.tɪv/]: Từ ghép có nhịp điệu hơi phức tạp. Chú ý cụm /st/ ở post và âm /v/ ma sát răng môi nhẹ ở cuối.',
+  privacy: '🥁 [Trọng âm từ /ˈpraɪ.və.si/]: Trọng âm nhấn âm 1 PRI. Tránh đọc nhầm thành pri-va-cy giọng Việt bẹt.',
+  both: '🦷 [Âm răng-lưỡi vô thanh /θ/ ở cuối]: Phát âm /bəʊθ/. Cơ học: Đặt đầu lưỡi nằm nhẹ giữa răng cửa trên và dưới. Thổi hơi nhẹ qua khe răng-lưỡi ở cuối để tạo âm ma sát vô thanh.',
+  obligation: '🥁 [Trọng âm từ /ˌɒb.lɪˈɡeɪ.ʃən/]: Trọng âm nhấn âm 3 GA /ɡeɪ/. Chú ý âm cuối lướt nhẹ /ʃən/.',
+
   // Câu 1
   good: '🦷 [Âm bật hữu thanh /d/ ở cuối]: Đầu lưỡi chạm ngạc cứng chặn luồng hơi, rung nhẹ dây thanh quản rồi bật nhẹ hơi tạo âm /d/. Tránh đọc thành "gút" bị nuốt mất âm cuối.',
   morning: '👅 [Âm mũi /ŋ/ ở cuối]: Phát âm /ˈmɔː.nɪŋ/. Cơ học: Hạ ngạc mềm xuống, nâng cuống lưỡi chạm ngạc mềm chặn hoàn toàn đường miệng để luồng hơi đi lên và vang qua khoang mũi.',
@@ -659,7 +675,27 @@ function prevSentence() {
 // ── Text-to-Speech ────────────────────────────────────────────
 let currentAudio = null;
 
-function speak(text, rate = 0.85) {
+// ── HVPT: nhiều giọng bản ngữ (High Variability Phonetic Training) ──
+// Bằng chứng: nghe cùng 1 nội dung qua NHIỀU người nói khác nhau giúp
+// não khái quát hóa âm tốt hơn và chuyển giao sang giọng/từ mới.
+const HVPT_VOICES = [
+  'en-US-AvaNeural', 'en-US-AndrewNeural', 'en-US-EmmaNeural', 'en-US-BrianNeural',
+  'en-US-GuyNeural', 'en-US-JennyNeural', 'en-US-AriaNeural', 'en-US-ChristopherNeural'
+];
+let hvptIdx = 0;
+state.hvptMode = (localStorage.getItem('hvptMode') ?? '1') === '1';
+
+function toggleHVPT() {
+  state.hvptMode = !state.hvptMode;
+  localStorage.setItem('hvptMode', state.hvptMode ? '1' : '0');
+  const el = document.getElementById('hvptToggle');
+  if (el) {
+    el.textContent = state.hvptMode ? '🎚️ Đa giọng HVPT: BẬT' : '🎚️ Đa giọng HVPT: TẮT';
+    el.className = state.hvptMode ? 'btn btn-success btn-sm' : 'btn btn-ghost btn-sm';
+  }
+}
+
+function speak(text, rate = 0.85, voice) {
   if (currentAudio) {
     currentAudio.pause();
     currentAudio = null;
@@ -668,8 +704,15 @@ function speak(text, rate = 0.85) {
     window.speechSynthesis.cancel();
   }
 
+  // Nếu không chỉ định giọng và đang bật HVPT -> xoay vòng giọng khác nhau
+  if (!voice && state.hvptMode) {
+    voice = HVPT_VOICES[hvptIdx % HVPT_VOICES.length];
+    hvptIdx++;
+  }
+
   const encodedText = encodeURIComponent(text);
-  const audioUrl = `${API_BASE}/api/tts?text=${encodedText}&rate=${rate}`;
+  const voiceParam = voice ? `&voice=${encodeURIComponent(voice)}` : '';
+  const audioUrl = `${API_BASE}/api/tts?text=${encodedText}&rate=${rate}${voiceParam}`;
 
   const audio = new Audio(audioUrl);
   currentAudio = audio;
@@ -698,18 +741,24 @@ function fallbackWebSpeech(text, rate) {
 }
 
 // ── Minimal Pairs ─────────────────────────────────────────────
+// Tạo nút nhóm minimal pairs động (tự bao gồm các nhóm mở rộng)
+function renderPairButtons(activeKey) {
+  const container = document.getElementById('pairGroupButtons');
+  if (!container) return;
+  container.innerHTML = Object.keys(EXERCISES.minimalPairs).map(key => {
+    const g = EXERCISES.minimalPairs[key];
+    const label = g.label || g.title || key;
+    const cls = key === activeKey ? 'btn btn-primary' : 'btn btn-ghost';
+    return `<button class="${cls}" data-pgkey="${key}" onclick="showPairGroup('${key}')">${label}</button>`;
+  }).join('');
+}
+
 function showPairGroup(groupKey) {
   const group = EXERCISES.minimalPairs[groupKey];
   if (!group) return;
-  
-  // Update buttons
-  document.querySelectorAll('#tab-minimal-pairs .btn-group .btn').forEach(b => {
-    b.className = 'btn btn-ghost';
-  });
-  const btnMap = { dental_fricatives: 'btn-dental', aspiration: 'btn-aspiration', sibilants: 'btn-sibilants' };
-  const activeBtn = document.getElementById(btnMap[groupKey]);
-  if (activeBtn) activeBtn.className = 'btn btn-primary';
-  
+
+  renderPairButtons(groupKey);
+
   document.getElementById('pairGroupTitle').textContent = group.title;
   document.getElementById('pairGroupDesc').textContent = group.description;
   
@@ -1526,6 +1575,12 @@ async function init() {
 
   updateDashboard();
   updateSentenceDisplay();
+  // Đồng bộ nhãn nút HVPT theo trạng thái đã lưu
+  const hvptEl = document.getElementById('hvptToggle');
+  if (hvptEl) {
+    hvptEl.textContent = state.hvptMode ? '🎚️ Đa giọng HVPT: BẬT' : '🎚️ Đa giọng HVPT: TẮT';
+    hvptEl.className = state.hvptMode ? 'btn btn-success btn-sm' : 'btn btn-ghost btn-sm';
+  }
   showPairGroup('dental_fricatives');
   renderClusters();
   populateClusterSelect();

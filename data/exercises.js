@@ -241,6 +241,36 @@ const EXERCISES = {
         focus: "robust /st/, moral compass (NOT Mortal Kombat!)",
         difficulty: 5,
         tips: "ro-BUST: giữ /st/. MOR-al COM-pass: 2 từ riêng biệt, nhấn âm 1 mỗi từ."
+      },
+      {
+        text: "I would like to present a rare case of a patient with large staghorn stones.",
+        focus: "/ð/ in 'with', final /st/ in 'present' and 'patient', final /nz/ in 'stones'",
+        difficulty: 3,
+        tips: "present: bật /t/ rõ. patient: bật /t/ rõ. stones: đọc rõ âm đầu /st/ và âm cuối /nz/."
+      },
+      {
+        text: "We must discuss the risks and benefits of laparoscopic prostate surgery.",
+        focus: "final /st/ in 'must', final complex /sks/ in 'risks', final /ts/ in 'benefits', stress in 'laparoscopic' and 'prostate'",
+        difficulty: 4,
+        tips: "must: giữ /st/. risks: /sk/ + /s/. benefits: bật /ts/ ở cuối. lap-a-ro-SCOP-ic: nhấn âm 4. PROS-tate: nhấn âm 1."
+      },
+      {
+        text: "The tumor board accepts the facts and supports this treatment plan.",
+        focus: "final complex /pts/ in 'accepts', final complex /kts/ in 'facts', final /ts/ in 'supports', /ð/ in 'The', /ðɪs/ in 'this'",
+        difficulty: 4,
+        tips: "accepts: bật /p/ + /t/ + /s/. facts: bật /k/ + /t/ + /s/. supports: bật /t/ + /s/. this: đặt lưỡi giữa răng thổi hơi."
+      },
+      {
+        text: "Our clinical trial shows a significant decrease in post-operative pain.",
+        focus: "stress-timing, stress in 'significant', show /z/ sound, post-operative rhythm",
+        difficulty: 3,
+        tips: "sig-NIF-i-cant: nhấn âm 2. shows: rung âm /z/ cuối. post-operative: ngắt nhẹ sau post."
+      },
+      {
+        text: "Protecting patient privacy is both a legal duty and an ethical obligation.",
+        focus: "/θ/ in 'both' and 'ethical', stress in 'obligation', vowel /əʊ/ in 'both'",
+        difficulty: 5,
+        tips: "both: đặt đầu lưỡi giữa răng thổi hơi nhẹ /θ/. eth-i-cal: đặt lưỡi giữa răng. ob-li-GA-tion: nhấn âm 3."
       }
     ]
   },
