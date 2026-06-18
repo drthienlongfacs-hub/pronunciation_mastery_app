@@ -92,6 +92,27 @@ def main():
     else:
         print("⚠️ Failed to send Telegram message.")
         
+    # Ghi nhận Tunnel URL phục vụ tự động phát hiện phía Client
+    print("✍️ Saving tunnel URL to data/tunnel_url.json...")
+    try:
+        os.makedirs("data", exist_ok=True)
+        with open("data/tunnel_url.json", "w") as f:
+            json.dump({"url": url, "updated_at": time.strftime('%H:%M %d/%m/%Y')}, f, indent=2)
+        print("✅ Tunnel URL saved.")
+        
+        # Tự động đẩy cập nhật lên GitHub Pages
+        print("📤 Pushing updated Tunnel URL to GitHub Pages...")
+        env = os.environ.copy()
+        if "GITHUB_TOKEN" in env:
+            del env["GITHUB_TOKEN"]
+        
+        subprocess.run("git add data/tunnel_url.json", shell=True, env=env)
+        subprocess.run('git commit -m "chore: update live tunnel URL [skip ci]"', shell=True, env=env)
+        subprocess.run("git push origin feature/pronunciation-coach", shell=True, env=env)
+        print("✅ GitHub Pages updated successfully!")
+    except Exception as e:
+        print(f"⚠️ Failed to update GitHub Pages automatically: {e}")
+        
     print("\nPress Ctrl+C to stop local server and tunnel...")
     try:
         while True:

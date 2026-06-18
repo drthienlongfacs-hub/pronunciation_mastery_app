@@ -2,7 +2,7 @@
 // PRONUNCIATION MASTERY — Core Application Logic
 // ============================================================
 
-const API_BASE = localStorage.getItem('ai_api_base') || (window.location.protocol === 'file:' ? 'http://localhost:3000' : '');
+let API_BASE = localStorage.getItem('ai_api_base') || (window.location.protocol === 'file:' ? 'http://localhost:3000' : '');
 
 // ── State ─────────────────────────────────────────────────────
 const state = {
@@ -760,6 +760,11 @@ function toggleSettingsPanel() {
     const input = document.getElementById('aiApiBaseInput');
     if (input) {
       input.value = localStorage.getItem('ai_api_base') || '';
+      if (state.discoveredTunnelUrl) {
+        input.placeholder = `Tự động phát hiện: ${state.discoveredTunnelUrl}`;
+      } else {
+        input.placeholder = "https://xxx.trycloudflare.com (Để trống nếu chạy offline/local)";
+      }
     }
   }
 }
@@ -1908,6 +1913,26 @@ async function init() {
   }
   
   await loadStateFromServer();
+
+  // Tự động tìm kiếm Tunnel URL từ GitHub Pages
+  try {
+    const res = await fetch('data/tunnel_url.json?_t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.url) {
+        console.log('Phát hiện máy chủ AI tự động:', data.url);
+        state.discoveredTunnelUrl = data.url;
+        
+        // Nếu người dùng chưa cấu hình thủ công trong localStorage, tự động sử dụng link này
+        if (!localStorage.getItem('ai_api_base')) {
+          API_BASE = data.url;
+          console.log('Đã tự động chuyển đổi Cổng AI sang:', API_BASE);
+        }
+      }
+    }
+  } catch (e) {
+    console.log('Không phát hiện máy chủ AI tự động hoặc đang chạy offline.');
+  }
 
   // Nạp dữ liệu học tập (SRS + nhật ký) rồi dựng kho item + biểu đồ
   if (typeof PMData !== 'undefined') {
