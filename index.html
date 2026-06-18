@@ -15,7 +15,7 @@
     <header class="app-header">
       <h1>🎯 Pronunciation Mastery</h1>
       <p class="subtitle">7-Day Hardcore English Pronunciation Boot Camp</p>
-      <span class="user-badge">ThS.BS.CKII. Lê Trọng Thiên Long</span>
+      <span class="user-badge" style="cursor:pointer;" onclick="toggleSettingsPanel()" title="Cấu hình kết nối máy chủ AI">ThS.BS.CKII. Lê Trọng Thiên Long ⚙️</span>
     </header>
 
     <!-- ═══ NAVIGATION ═══ -->
@@ -51,6 +51,18 @@
         <span class="tab-icon">🩺</span> Từ điển Urology
       </button>
     </nav>
+
+    <!-- ── Connection Settings Panel ── -->
+    <div id="connectionSettingsPanel" style="display:none; max-width:800px; margin:12px auto; padding:15px; background:rgba(30,41,59,0.7); border:1px solid var(--border-subtle); border-radius:var(--radius-md); text-align:left; animation: slideDownFade 0.3s ease-out;">
+      <h4 style="font-size:0.85rem; font-weight:700; color:var(--text-accent); margin-bottom:6px; letter-spacing:0.5px;">⚙️ CẤU HÌNH KẾT NỐI MÁY CHỦ AI (OFFLINE BACKEND)</h4>
+      <p style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:10px; line-height:1.45;">
+        Ứng dụng đang chạy ở chế độ Static (GitHub Pages). Để kích hoạt đầy đủ các tính năng chấm điểm âm vị y khoa chuyên sâu (mô hình Allosaurus) và giọng nói Edge-TTS trầm ấm, vui lòng nhập địa chỉ Tunnel Cloudflare (ví dụ: <code>https://xxx.trycloudflare.com</code>) thu được khi chạy script trên máy Mac của bác sĩ.
+      </p>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="aiApiBaseInput" placeholder="https://xxx.trycloudflare.com (Để trống nếu chạy offline/local)" style="flex:1; background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); color:white; border-radius:4px; padding:6px 12px; font-size:0.8rem; font-family:var(--font-mono); outline:none;">
+        <button class="btn btn-primary btn-sm" onclick="saveAiApiBase()" style="font-size:0.8rem; padding:6px 14px; flex-shrink:0;">Lưu cấu hình</button>
+      </div>
+    </div>
 
     <!-- ═══ TAB: DASHBOARD ═══ -->
     <div class="tab-content active" id="tab-dashboard">

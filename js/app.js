@@ -2,7 +2,7 @@
 // PRONUNCIATION MASTERY — Core Application Logic
 // ============================================================
 
-const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
+const API_BASE = localStorage.getItem('ai_api_base') || (window.location.protocol === 'file:' ? 'http://localhost:3000' : '');
 
 // ── State ─────────────────────────────────────────────────────
 const state = {
@@ -751,6 +751,38 @@ function updateGlobalTTSSpeed(value) {
   document.querySelectorAll('.tts-speed-selector').forEach(select => {
     select.value = value;
   });
+}
+
+function toggleSettingsPanel() {
+  const panel = document.getElementById('connectionSettingsPanel');
+  if (panel) {
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    const input = document.getElementById('aiApiBaseInput');
+    if (input) {
+      input.value = localStorage.getItem('ai_api_base') || '';
+    }
+  }
+}
+
+function saveAiApiBase() {
+  const input = document.getElementById('aiApiBaseInput');
+  if (input) {
+    let val = input.value.trim();
+    if (val && !val.startsWith('http://') && !val.startsWith('https://')) {
+      val = 'https://' + val;
+    }
+    if (val.endsWith('/')) {
+      val = val.slice(0, -1);
+    }
+    if (val) {
+      localStorage.setItem('ai_api_base', val);
+      alert(`Đã kết nối tới máy chủ AI: ${val}\nỨng dụng sẽ tự động tải lại.`);
+    } else {
+      localStorage.removeItem('ai_api_base');
+      alert('Đã xóa cấu hình máy chủ AI. Ứng dụng sẽ sử dụng mặc định (Local/Static).\nỨng dụng sẽ tự động tải lại.');
+    }
+    window.location.reload();
+  }
 }
 
 function fallbackWebSpeech(text, rate) {
