@@ -62,6 +62,9 @@
         <input type="text" id="aiApiBaseInput" placeholder="https://xxx.trycloudflare.com (Để trống nếu chạy offline/local)" style="flex:1; background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); color:white; border-radius:4px; padding:6px 12px; font-size:0.8rem; font-family:var(--font-mono); outline:none;">
         <button class="btn btn-primary btn-sm" onclick="saveAiApiBase()" style="font-size:0.8rem; padding:6px 14px; flex-shrink:0;">Lưu cấu hình</button>
       </div>
+      <div id="aiConnectionStatus" style="margin-top:10px; font-size:0.75rem; color:var(--text-secondary); line-height:1.45;">
+        Trạng thái kết nối AI sẽ được kiểm tra tự động khi tải trang.
+      </div>
     </div>
 
     <!-- ═══ TAB: DASHBOARD ═══ -->
@@ -192,6 +195,12 @@
           <div class="transcript" id="asrTranscript"></div>
         </div>
 
+        <div class="asr-result" id="recordingPlaybackPanel" style="display:none">
+          <div class="label">Bản ghi âm vừa thu</div>
+          <audio id="recordingPlaybackAudio" controls preload="metadata" style="width:100%;margin-top:8px"></audio>
+          <div id="recordingPlaybackMeta" style="margin-top:8px;font-size:0.8rem;color:var(--text-secondary);line-height:1.45"></div>
+        </div>
+
         <div id="matchResult" style="display:none;margin-top:16px;text-align:center">
           <div class="score-ring" style="--score:0" id="scoreRing">
             <div class="score-ring-inner">
@@ -292,6 +301,12 @@
         <div class="asr-result" id="clusterAsrResult" style="display:none">
           <div class="label">ASR nghe được</div>
           <div class="transcript" id="clusterAsrTranscript"></div>
+        </div>
+
+        <div class="asr-result" id="clusterRecordingPlaybackPanel" style="display:none">
+          <div class="label">Bản ghi âm vừa thu</div>
+          <audio id="clusterRecordingPlaybackAudio" controls preload="metadata" style="width:100%;margin-top:8px"></audio>
+          <div id="clusterRecordingPlaybackMeta" style="margin-top:8px;font-size:0.8rem;color:var(--text-secondary);line-height:1.45"></div>
         </div>
 
         <div id="clusterMatchResult" style="display:none;margin-top:16px;text-align:center">

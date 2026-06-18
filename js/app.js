@@ -213,6 +213,7 @@ async function toggleRecording() {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+    if (typeof resetPhonemeUi === 'function') resetPhonemeUi('sentence');
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     recordingStream = stream;
     state.isRecording = true;
@@ -684,6 +685,7 @@ function updateSentenceDisplay() {
   // Reset results
   document.getElementById('asrResult').style.display = 'none';
   document.getElementById('matchResult').style.display = 'none';
+  if (typeof resetPhonemeUi === 'function') resetPhonemeUi('sentence');
 }
 
 function nextSentence() {
@@ -774,6 +776,9 @@ function toggleSettingsPanel() {
       } else {
         input.placeholder = "https://xxx.trycloudflare.com (Để trống nếu chạy offline/local)";
       }
+    }
+    if (panel.style.display !== 'none' && typeof getPhonemeServiceStatus === 'function') {
+      getPhonemeServiceStatus(true);
     }
   }
 }
@@ -974,6 +979,7 @@ function onClusterSelectChange() {
     document.getElementById('clusterAsrResult').style.display = 'none';
     document.getElementById('clusterMatchResult').style.display = 'none';
     document.getElementById('clusterAiFeedbackContainer').style.display = 'none';
+    if (typeof resetPhonemeUi === 'function') resetPhonemeUi('cluster');
   }
 }
 
@@ -1036,6 +1042,7 @@ async function toggleClusterRecording() {
     btn.classList.add('recording');
     if (icon) icon.textContent = '⏹';
     label.textContent = 'Đang thu âm... Hãy nói từ đã chọn';
+    if (typeof resetPhonemeUi === 'function') resetPhonemeUi('cluster');
     
     initAudioVisualization(stream);
 
@@ -1953,9 +1960,10 @@ async function init() {
       if (data && data.url) {
         console.log('Phát hiện máy chủ AI tự động:', data.url);
         state.discoveredTunnelUrl = data.url;
+        const isLocalBackendHost = ['localhost', '127.0.0.1', '::1'].includes((window.location.hostname || '').toLowerCase());
         
         // Nếu người dùng chưa cấu hình thủ công trong localStorage, tự động sử dụng link này
-        if (!localStorage.getItem('ai_api_base')) {
+        if (!localStorage.getItem('ai_api_base') && !isLocalBackendHost) {
           API_BASE = data.url;
           console.log('Đã tự động chuyển đổi Cổng AI sang:', API_BASE);
         }
@@ -1963,6 +1971,10 @@ async function init() {
     }
   } catch (e) {
     console.log('Không phát hiện máy chủ AI tự động hoặc đang chạy offline.');
+  }
+
+  if (typeof getPhonemeServiceStatus === 'function') {
+    getPhonemeServiceStatus(true);
   }
 
   // Nạp dữ liệu học tập (SRS + nhật ký) rồi dựng kho item + biểu đồ

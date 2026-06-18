@@ -355,7 +355,14 @@ app.post('/api/phoneme-score', (req, res) => {
 
   // Lưu audio người dùng -> wav 16k
   const stamp = crypto.randomBytes(6).toString('hex');
-  const ext = (mimeType && mimeType.includes('wav')) ? 'wav' : 'webm';
+  const mime = String(mimeType || '').toLowerCase();
+  const ext = mime.includes('wav')
+    ? 'wav'
+    : (mime.includes('mp4') || mime.includes('m4a') || mime.includes('aac'))
+      ? 'mp4'
+      : mime.includes('ogg')
+        ? 'ogg'
+        : 'webm';
   const rawPath = path.join(CACHE_DIR, `user_${stamp}_raw.${ext}`);
   const userWav = path.join(CACHE_DIR, `user_${stamp}_16k.wav`);
   const cleanup = () => [rawPath, userWav].forEach(f => { try { fs.unlinkSync(f); } catch (e) {} });
