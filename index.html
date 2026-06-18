@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Pronunciation Mastery — Ứng dụng luyện phát âm tiếng Anh cá nhân hóa cho BS. Lê Trọng Thiên Long">
   <title>Pronunciation Mastery — 7-Day Hardcore Training</title>
-  <link rel="stylesheet" href="css/style.css?v=202606181620">
-  <script src="data/exercises.js?v=202606181620"></script>
-  <script src="data/exercises_ext.js?v=202606181620"></script>
+  <link rel="stylesheet" href="css/style.css?v=202606181640">
+  <script src="data/exercises.js?v=202606181640"></script>
+  <script src="data/exercises_ext.js?v=202606181640"></script>
 </head>
 <body>
   <div id="app">
@@ -199,6 +199,9 @@
           <div class="label">Bản ghi âm vừa thu</div>
           <audio id="recordingPlaybackAudio" controls preload="metadata" style="width:100%;margin-top:8px"></audio>
           <div id="recordingPlaybackMeta" style="margin-top:8px;font-size:0.8rem;color:var(--text-secondary);line-height:1.45"></div>
+          <div id="recordingPlaybackTranscript" style="margin-top:8px;font-size:0.85rem;color:var(--text-secondary);line-height:1.45;display:none">
+            Phiên âm thực tế: <span class="ipa-text" style="color:var(--accent-secondary);font-weight:700;font-family:var(--font-mono)"></span>
+          </div>
         </div>
 
         <div id="matchResult" style="display:none;margin-top:16px;text-align:center">
@@ -307,6 +310,9 @@
           <div class="label">Bản ghi âm vừa thu</div>
           <audio id="clusterRecordingPlaybackAudio" controls preload="metadata" style="width:100%;margin-top:8px"></audio>
           <div id="clusterRecordingPlaybackMeta" style="margin-top:8px;font-size:0.8rem;color:var(--text-secondary);line-height:1.45"></div>
+          <div id="clusterRecordingPlaybackTranscript" style="margin-top:8px;font-size:0.85rem;color:var(--text-secondary);line-height:1.45;display:none">
+            Phiên âm thực tế: <span class="ipa-text" style="color:var(--accent-secondary);font-weight:700;font-family:var(--font-mono)"></span>
+          </div>
         </div>
 
         <div id="clusterMatchResult" style="display:none;margin-top:16px;text-align:center">
@@ -456,10 +462,10 @@
     </div>
   </div>
 
-  <script src="data/exercises_ext.js?v=202606181620"></script>
-  <script src="js/app.js?v=202606181620"></script>
-  <script src="js/srs.js?v=202606181620"></script>
-  <script src="js/review.js?v=202606181620"></script>
-  <script src="js/phoneme.js?v=202606181620"></script>
+  <script src="data/exercises_ext.js?v=202606181640"></script>
+  <script src="js/app.js?v=202606181640"></script>
+  <script src="js/srs.js?v=202606181640"></script>
+  <script src="js/review.js?v=202606181640"></script>
+  <script src="js/phoneme.js?v=202606181640"></script>
 </body>
 </html>

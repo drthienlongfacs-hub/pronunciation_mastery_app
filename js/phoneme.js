@@ -229,6 +229,15 @@ function resetAudioPreview(scope) {
   const audio = document.getElementById(config.playbackAudioId);
   const meta = document.getElementById(config.playbackMetaId);
 
+  const transcriptId = scope === 'cluster' ? 'clusterRecordingPlaybackTranscript' : 'recordingPlaybackTranscript';
+  const transcriptEl = document.getElementById(transcriptId);
+  if (transcriptEl) {
+    transcriptEl.style.display = 'none';
+    const spanEl = transcriptEl.querySelector('.ipa-text');
+    if (spanEl) spanEl.textContent = '';
+    else transcriptEl.textContent = '';
+  }
+
   if (previewUrls[config.scope]) {
     URL.revokeObjectURL(previewUrls[config.scope]);
     previewUrls[config.scope] = null;
@@ -441,18 +450,39 @@ function renderPhonemeResult(result, content) {
     }
   }
 
+  // Hiển thị phiên âm IPA thực tế tại khung nghe lại ("Bản ghi âm vừa thu")
+  let playbackTranscriptEl;
+  if (content.id === 'phonemeContent') {
+    playbackTranscriptEl = document.getElementById('recordingPlaybackTranscript');
+  } else if (content.id === 'clusterAiFeedbackContent') {
+    playbackTranscriptEl = document.getElementById('clusterRecordingPlaybackTranscript');
+  }
+  if (playbackTranscriptEl && result.userPhones && result.userPhones.length) {
+    const ipaStr = '/' + result.userPhones.join('') + '/';
+    const spanEl = playbackTranscriptEl.querySelector('.ipa-text');
+    if (spanEl) {
+      spanEl.textContent = ipaStr;
+    } else {
+      playbackTranscriptEl.textContent = 'Phiên âm thực tế: ' + ipaStr;
+    }
+    playbackTranscriptEl.style.display = 'block';
+  }
+
   const phoneRow = (arr, hl) => (arr || []).map(p =>
     `<span style="display:inline-block;padding:2px 7px;margin:2px;border-radius:6px;font-family:var(--font-mono);font-size:0.85rem;background:${hl ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)'};color:${hl ? 'var(--accent-red)' : 'var(--text-secondary)'}">${p}</span>`
   ).join('');
+
+  const refIpaStr = result.refPhones && result.refPhones.length ? '/' + result.refPhones.join('') + '/' : '/-/';
+  const userIpaStr = result.userPhones && result.userPhones.length ? '/' + result.userPhones.join('') + '/' : '/-/';
 
   let html = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
       <div style="font-size:1.6rem;font-weight:800;color:${color}">${acc}%</div>
       <div style="font-size:0.82rem;color:var(--text-secondary)">Độ tương đồng âm vị so với giọng bản ngữ mẫu (beta · allosaurus mã nguồn mở)</div>
     </div>
-    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px">Giọng mẫu đọc:</div>
+    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px">Giọng mẫu đọc (IPA: <span style="font-family:var(--font-mono);color:var(--accent-secondary);font-weight:bold">${refIpaStr}</span>):</div>
     <div style="margin-bottom:8px">${phoneRow(result.refPhones, false)}</div>
-    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px">Bác sĩ đọc:</div>
+    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px">Bác sĩ đọc (IPA: <span style="font-family:var(--font-mono);color:var(--accent-secondary);font-weight:bold">${userIpaStr}</span>):</div>
     <div style="margin-bottom:8px">${phoneRow(result.userPhones, false)}</div>`;
 
   if (result.feedbacks && result.feedbacks.length) {
