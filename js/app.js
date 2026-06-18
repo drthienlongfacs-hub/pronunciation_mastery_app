@@ -231,77 +231,86 @@ async function toggleRecording() {
 
     // continuous = true cho phép bác sĩ Long ngắt nghỉ lấy hơi giữa câu thoải mái
     state.recognition = initSpeechRecognition(true);
-    if (!state.recognition) {
-      label.textContent = 'Trình duyệt không hỗ trợ Speech Recognition. Dùng Chrome.';
-      return;
-    }
-    
     const asrResult = document.getElementById('asrResult');
     const asrTranscript = document.getElementById('asrTranscript');
-    
-    // Tự động dừng ghi âm sau 5 giây im lặng liên tục
-    resetSilenceTimer();
-    
-    function resetSilenceTimer() {
-      if (state.silenceTimer) clearTimeout(state.silenceTimer);
+
+    if (!state.recognition) {
+      console.warn('Speech Recognition not supported in this browser. Running in AI-only phoneme mode.');
+      label.textContent = 'Đang thu âm... (Chế độ Phân tích Âm vị)';
+      // Tự động dừng sau 15 giây nếu không có ASR dò im lặng
       state.silenceTimer = setTimeout(() => {
-        console.log('ASR: Tự động dừng do im lặng.');
         if (state.isRecording) {
+          console.log('AI-only: Tự động dừng ghi âm sau 15s.');
           toggleRecording();
         }
-      }, 5000);
-    }
-
-    state.recognition.onresult = (event) => {
-      // Gia hạn thu âm khi phát hiện có từ mới nói ra
+      }, 15000);
+    } else {
+      // Tự động dừng ghi âm sau 5 giây im lặng liên tục
       resetSilenceTimer();
       
-      let sessionTranscript = '';
-      for (let i = 0; i < event.results.length; i++) {
-        sessionTranscript += event.results[i][0].transcript;
+      function resetSilenceTimer() {
+        if (state.silenceTimer) clearTimeout(state.silenceTimer);
+        state.silenceTimer = setTimeout(() => {
+          console.log('ASR: Tự động dừng do im lặng.');
+          if (state.isRecording) {
+            toggleRecording();
+          }
+        }, 5000);
       }
-      state.currentSessionTranscript = sessionTranscript;
-      const fullTranscript = (state.accumulatedTranscript + ' ' + sessionTranscript).trim();
+    }
+
+    if (state.recognition) {
+      state.recognition.onresult = (event) => {
+        // Gia hạn thu âm khi phát hiện có từ mới nói ra
+        resetSilenceTimer();
+        
+        let sessionTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          sessionTranscript += event.results[i][0].transcript;
+        }
+        state.currentSessionTranscript = sessionTranscript;
+        const fullTranscript = (state.accumulatedTranscript + ' ' + sessionTranscript).trim();
+        
+        asrResult.style.display = 'block';
+        asrTranscript.textContent = fullTranscript;
+        
+        compareWithTarget(fullTranscript);
+      };
       
-      asrResult.style.display = 'block';
-      asrTranscript.textContent = fullTranscript;
+      state.recognition.onerror = (event) => {
+        console.error('ASR Error:', event.error);
+        if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(event.error)) {
+          state.isRecording = false;
+          btn.classList.remove('recording');
+          icon.textContent = '🎙️';
+          label.textContent = `Lỗi microphone: ${event.error}`;
+          stopVisualization();
+          if (recordingStream) {
+            recordingStream.getTracks().forEach(t => t.stop());
+            recordingStream = null;
+          }
+        } else if (event.error === 'no-speech') {
+          label.textContent = 'Không phát hiện giọng nói. Hãy nói to rõ hơn...';
+        }
+      };
       
-      compareWithTarget(fullTranscript);
-    };
-    
-    state.recognition.onerror = (event) => {
-      console.error('ASR Error:', event.error);
-      if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(event.error)) {
-        state.isRecording = false;
-        btn.classList.remove('recording');
-        icon.textContent = '🎙️';
-        label.textContent = `Lỗi microphone: ${event.error}`;
-        stopVisualization();
-        if (recordingStream) {
-          recordingStream.getTracks().forEach(t => t.stop());
-          recordingStream = null;
+      state.recognition.onend = () => {
+        if (state.isRecording) {
+          // Tự động kết nối lại ASR khi bị ngắt quãng giữa câu để lấy hơi
+          if (state.currentSessionTranscript) {
+            state.accumulatedTranscript = (state.accumulatedTranscript + ' ' + state.currentSessionTranscript).trim();
+            state.currentSessionTranscript = '';
+          }
+          try {
+            state.recognition.start();
+          } catch (e) {
+            console.log("Recognition restart failed:", e);
+          }
         }
-      } else if (event.error === 'no-speech') {
-        label.textContent = 'Không phát hiện giọng nói. Hãy nói to rõ hơn...';
-      }
-    };
-    
-    state.recognition.onend = () => {
-      if (state.isRecording) {
-        // Tự động kết nối lại ASR khi bị ngắt quãng giữa câu để lấy hơi
-        if (state.currentSessionTranscript) {
-          state.accumulatedTranscript = (state.accumulatedTranscript + ' ' + state.currentSessionTranscript).trim();
-          state.currentSessionTranscript = '';
-        }
-        try {
-          state.recognition.start();
-        } catch (e) {
-          console.log("Recognition restart failed:", e);
-        }
-      }
-    };
-    
-    state.recognition.start();
+      };
+      
+      state.recognition.start();
+    }
   } catch (err) {
     label.textContent = 'Không thể truy cập microphone. Kiểm tra quyền truy cập.';
     console.error(err);
@@ -996,6 +1005,13 @@ async function toggleClusterRecording() {
     }
     
     stopVisualization();
+
+    // Gửi âm thanh lên AI backend chấm âm vị
+    if (typeof phonemeStopAndScore === 'function') {
+      const select = document.getElementById('clusterSelect');
+      const targetWord = select.value;
+      if (targetWord) phonemeStopAndScore(targetWord, 'clusterMatchResult', 'clusterAiFeedbackContent', `clus:${targetWord}`);
+    }
     
     if (recordingStream) {
       recordingStream.getTracks().forEach(t => t.stop());
@@ -1022,39 +1038,54 @@ async function toggleClusterRecording() {
     label.textContent = 'Đang thu âm... Hãy nói từ đã chọn';
     
     initAudioVisualization(stream);
+
+    // Kích hoạt ghi âm song song
+    if (typeof phonemeStartCapture === 'function') phonemeStartCapture(stream);
     
     state.recognition = initSpeechRecognition(false);
     if (!state.recognition) {
-      label.textContent = 'Trình duyệt không hỗ trợ. Dùng Chrome.';
-      return;
-    }
-    
-    const asrResult = document.getElementById('clusterAsrResult');
-    const asrTranscript = document.getElementById('clusterAsrTranscript');
-    
-    state.recognition.onresult = async (event) => {
-      let transcript = '';
-      for (let i = 0; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-      }
-      asrResult.style.display = 'block';
-      asrTranscript.textContent = transcript;
+      console.warn('Speech Recognition not supported. Running in AI-only phoneme mode.');
+      label.textContent = 'Đang thu âm... (Chế độ Phân tích Âm vị)';
+      // Tự động dừng sau 6 giây nếu không có ASR
+      state.silenceTimer = setTimeout(() => {
+        if (state.isRecording) {
+          toggleClusterRecording();
+        }
+      }, 6000);
+    } else {
+      const asrResult = document.getElementById('clusterAsrResult');
+      const asrTranscript = document.getElementById('clusterAsrTranscript');
       
-      await compareClusterWithTarget(transcript);
-    };
-    
-    state.recognition.onerror = (event) => {
-      console.error('ASR Error:', event.error);
-      label.textContent = `Lỗi: ${event.error}`;
-    };
-    
-    state.recognition.onend = () => {
-      if (state.isRecording) {
-        toggleClusterRecording();
-      }
-    };
-    
-    state.recognition.start();
+      state.recognition.onresult = async (event) => {
+        let transcript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        asrResult.style.display = 'block';
+        asrTranscript.textContent = transcript;
+        
+        await compareClusterWithTarget(transcript);
+      };
+      
+      state.recognition.onerror = (event) => {
+        console.error('ASR Error:', event.error);
+        if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(event.error)) {
+          console.warn('ASR permission/capture failed. Falling back to AI phoneme mode.');
+          state.recognition = null;
+          label.textContent = 'Đang thu âm... (Chế độ Phân tích Âm vị)';
+        } else {
+          label.textContent = `Lỗi: ${event.error}`;
+        }
+      };
+      
+      state.recognition.onend = () => {
+        if (state.isRecording) {
+          toggleClusterRecording();
+        }
+      };
+      
+      state.recognition.start();
+    }
   } catch (err) {
     label.textContent = 'Lỗi microphone';
     console.error(err);

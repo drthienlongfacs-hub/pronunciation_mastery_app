@@ -89,6 +89,40 @@ function renderPhonemeResult(result, content) {
   }
   const acc = result.accuracy;
   const color = acc >= 85 ? 'var(--accent-green)' : acc >= 65 ? 'var(--accent-amber)' : 'var(--accent-red)';
+
+  // Tự động cập nhật vòng tròn hiển thị điểm và thông báo (nếu có)
+  let ringEl, valEl, feedbackEl;
+  if (content.id === 'phonemeContent') {
+    ringEl = document.getElementById('scoreRing');
+    valEl = document.getElementById('scoreValue');
+    feedbackEl = document.getElementById('matchFeedback');
+    const panel = document.getElementById('matchResult');
+    if (panel) panel.style.display = 'block';
+  } else if (content.id === 'clusterAiFeedbackContent') {
+    ringEl = document.getElementById('clusterScoreRing');
+    valEl = document.getElementById('clusterScoreValue');
+    feedbackEl = document.getElementById('clusterMatchFeedback');
+    const panel = document.getElementById('clusterMatchResult');
+    if (panel) panel.style.display = 'block';
+  }
+
+  if (ringEl && typeof acc === 'number') {
+    ringEl.style.setProperty('--score', acc);
+    if (valEl) valEl.textContent = acc + '%';
+    if (feedbackEl) {
+      if (acc >= 85) {
+        feedbackEl.textContent = '🎉 Tuyệt vời! Độ chính xác âm vị rất cao!';
+        feedbackEl.style.color = 'var(--accent-green)';
+      } else if (acc >= 65) {
+        feedbackEl.textContent = '👍 Tốt! Hãy chú ý các âm vị bị lệch màu đỏ bên dưới.';
+        feedbackEl.style.color = 'var(--accent-amber)';
+      } else {
+        feedbackEl.textContent = '💪 Cần luyện thêm để cơ miệng quen với cấu âm này.';
+        feedbackEl.style.color = 'var(--accent-red)';
+      }
+    }
+  }
+
   const phoneRow = (arr, hl) => (arr || []).map(p =>
     `<span style="display:inline-block;padding:2px 7px;margin:2px;border-radius:6px;font-family:var(--font-mono);font-size:0.85rem;background:${hl ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)'};color:${hl ? 'var(--accent-red)' : 'var(--text-secondary)'}">${p}</span>`
   ).join('');
