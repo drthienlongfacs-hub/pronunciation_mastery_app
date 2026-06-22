@@ -48,6 +48,31 @@ def send_telegram(url):
         print(f"Telegram send failed: {e}")
     return False
 
+def start_tunnel_process(provider="cloudflare"):
+    if provider == "cloudflare":
+        if os.path.exists(TUNNEL_LOG):
+            try: os.remove(TUNNEL_LOG)
+            except: pass
+        proc = subprocess.Popen(
+            ["cloudflared", "tunnel", "--url", f"http://localhost:{PORT}", "--logfile", TUNNEL_LOG],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        return proc, TUNNEL_LOG, r"https://[a-z0-9-]+\.trycloudflare\.com"
+    else:
+        # Localtunnel
+        LT_LOG = "/tmp/lt_mastery_tunnel.log"
+        if os.path.exists(LT_LOG):
+            try: os.remove(LT_LOG)
+            except: pass
+        log_f = open(LT_LOG, "w")
+        proc = subprocess.Popen(
+            ["npx", "-y", "localtunnel", "--port", str(PORT)],
+            stdout=log_f,
+            stderr=log_f
+        )
+        return proc, LT_LOG, r"https://[a-z0-9-]+\.loca\.lt"
+
 def main():
     print("🧹 Cleaning up old processes...")
     kill_port_processes()
@@ -86,35 +111,53 @@ def main():
     if not fastapi_ready:
         print("⚠️ Warning: FastAPI Server health check timed out. Proceeding anyway...")
     
-    print("🌐 Launching Cloudflare Tunnel...")
-    if os.path.exists(TUNNEL_LOG):
-        try: os.remove(TUNNEL_LOG)
-        except: pass
-        
-    tunnel_proc = subprocess.Popen(
-        ["cloudflared", "tunnel", "--url", f"http://localhost:{PORT}", "--logfile", TUNNEL_LOG],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
-    )
+    print("🌐 Launching Tunnel...")
+    provider = "cloudflare"
+    tunnel_proc, log_file, pattern = start_tunnel_process(provider)
     
     url = None
-    print("⏳ Waiting for Live Tunnel URL (up to 60 seconds)...")
-    for i in range(60):
+    print("⏳ Waiting for Live Tunnel URL...")
+    for i in range(30):
         time.sleep(1)
-        if os.path.exists(TUNNEL_LOG):
-            with open(TUNNEL_LOG) as f:
+        if os.path.exists(log_file):
+            with open(log_file) as f:
                 content = f.read()
-            urls = re.findall(r"https://[a-z0-9-]+\.trycloudflare\.com", content)
+            
+            # Check for Cloudflare rate limit error
+            if provider == "cloudflare" and ("429 Too Many Requests" in content or "error code: 1015" in content):
+                print("⚠️ Cloudflare Tunnel rate-limited (429/1015).")
+                break
+                
+            urls = re.findall(pattern, content)
             if urls:
                 url = urls[0]
                 break
                 
     if not url:
-        print("❌ Failed to capture Tunnel URL. Check /tmp/cf_mastery_tunnel.log")
-        tunnel_proc.terminate()
+        print("🔄 Falling back to Localtunnel...")
+        try: tunnel_proc.terminate()
+        except: pass
+        provider = "localtunnel"
+        tunnel_proc, log_file, pattern = start_tunnel_process(provider)
+        
+        print("⏳ Waiting for Localtunnel URL (up to 30 seconds)...")
+        for i in range(30):
+            time.sleep(1)
+            if os.path.exists(log_file):
+                with open(log_file) as f:
+                    content = f.read()
+                urls = re.findall(pattern, content)
+                if urls:
+                    url = urls[0]
+                    break
+                    
+    if not url:
+        print("❌ Failed to capture Tunnel URL from both Cloudflare and Localtunnel.")
+        try: tunnel_proc.terminate()
+        except: pass
         return
         
-    print(f"\n✅ Captured Live URL: {url}")
+    print(f"\n✅ Captured Live URL ({provider}): {url}")
     if send_telegram(url):
         print("📲 Live link sent to Telegram!")
     else:
@@ -142,35 +185,54 @@ def main():
         print(f"⚠️ Failed to update GitHub Pages automatically: {e}")
         
     print("\nPress Ctrl+C to stop local server and tunnel...")
+    delay = 5
+    tunnel_start_time = time.time()
     try:
         while True:
-            if tunnel_proc.poll() is not None:
-                print("⚠️ Cloudflared stopped. Restarting tunnel in 3 seconds...")
-                time.sleep(3)
-                if os.path.exists(TUNNEL_LOG):
-                    try: os.remove(TUNNEL_LOG)
-                    except: pass
-                tunnel_proc = subprocess.Popen(
-                    ["cloudflared", "tunnel", "--url", f"http://localhost:{PORT}", "--logfile", TUNNEL_LOG],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
-                print("⏳ Waiting for new Tunnel URL...")
+            # Reset backoff nếu hầm đã chạy ổn định hơn 60s
+            if tunnel_proc.poll() is None:
+                if time.time() - tunnel_start_time > 60 and delay > 5:
+                    print("ℹ️ Tunnel has been stable for 60 seconds. Resetting backoff delay.")
+                    delay = 5
+            else:
+                print(f"⚠️ Tunnel ({provider}) stopped. Restarting in {delay} seconds...")
+                time.sleep(delay)
+                delay = min(delay * 2, 120)  # Tăng thời gian chờ gấp đôi (max 2 phút)
+                
+                # Khởi động lại hầm
+                tunnel_proc, log_file, pattern = start_tunnel_process(provider)
+                tunnel_start_time = time.time()
+                
                 new_url = None
                 for _ in range(30):
                     time.sleep(1)
-                    if os.path.exists(TUNNEL_LOG):
-                        with open(TUNNEL_LOG) as f:
+                    if os.path.exists(log_file):
+                        with open(log_file) as f:
                             content = f.read()
-                        urls = re.findall(r"https://[a-z0-9-]+\.trycloudflare\.com", content)
+                        
+                        # Nếu bị Cloudflare khóa tiếp, chuyển sang localtunnel
+                        if provider == "cloudflare" and ("429 Too Many Requests" in content or "error code: 1015" in content):
+                            print("⚠️ Cloudflare rate-limited during restart. Switching to Localtunnel...")
+                            try: tunnel_proc.terminate()
+                            except: pass
+                            provider = "localtunnel"
+                            tunnel_proc, log_file, pattern = start_tunnel_process(provider)
+                            tunnel_start_time = time.time()
+                            break
+                            
+                        urls = re.findall(pattern, content)
                         if urls:
                             new_url = urls[-1]
                             break
+                            
                 if new_url:
-                    print(f"✅ Re-captured Live URL: {new_url}")
+                    print(f"✅ Re-captured Live URL ({provider}): {new_url}")
+                    delay = 5
+                    
                     with open("data/tunnel_url.json", "w") as f:
                         json.dump({"url": new_url, "updated_at": time.strftime('%H:%M %d/%m/%Y')}, f, indent=2)
                     send_telegram(new_url)
+                    
                     env = os.environ.copy()
                     env.pop("GITHUB_TOKEN", None)
                     subprocess.run("git add data/tunnel_url.json", shell=True, env=env)
