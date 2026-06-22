@@ -776,6 +776,7 @@ const VOICE_OPTIONS = {
     { value: 'shimmer', label: 'Shimmer (Nữ, truyền cảm)' }
   ],
   clone: [
+    { value: 'native_pro', label: 'Giọng Clone Bản xứ (Tự nhiên, luyến láy & ấm áp)' },
     { value: 'medical', label: 'Thuyết trình y khoa (Medical Mode)' },
     { value: 'casual', label: 'Trò chuyện tự nhiên (Casual Mode)' },
     { value: 'academic', label: 'Báo cáo nghiên cứu (Academic Mode)' }

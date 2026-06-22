@@ -354,13 +354,14 @@ app.get('/api/tts', (req, res) => {
 
   } else if (provider === 'clone') {
     // Gọi FastAPI voice clone server ở cổng 8005
-    // exaggeration: y khoa (medical) -> 0.4, casual -> 0.6, academic -> 0.3
+    // exaggeration: y khoa (medical) -> 0.4, casual -> 0.6, academic -> 0.3, native_pro -> 0.5
     let exaggeration = 0.5;
     if (voice === 'medical') exaggeration = 0.4;
     else if (voice === 'casual') exaggeration = 0.6;
     else if (voice === 'academic') exaggeration = 0.3;
+    else if (voice === 'native_pro') exaggeration = 0.5;
 
-    fetch(`http://127.0.0.1:8005/api/clone-tts?text=${encodeURIComponent(text)}&exaggeration=${exaggeration}`)
+    fetch(`http://127.0.0.1:8005/api/clone-tts?text=${encodeURIComponent(text)}&exaggeration=${exaggeration}&voice=${voice}`)
     .then(async (apiRes) => {
       if (!apiRes.ok) {
         throw new Error(`FastAPI returned status ${apiRes.status}`);
