@@ -752,6 +752,109 @@ const HVPT_VOICES = [
 let hvptIdx = 0;
 state.hvptMode = (localStorage.getItem('hvptMode') ?? '1') === '1';
 
+// Initialize state variables for TTS
+state.ttsProvider = localStorage.getItem('ttsProvider') || 'edge';
+state.ttsVoice = localStorage.getItem('ttsVoice') || 'en-US-AvaNeural';
+
+const VOICE_OPTIONS = {
+  edge: [
+    { value: 'en-US-AvaNeural', label: 'Ava (Mỹ - Nữ trầm ấm)' },
+    { value: 'en-US-AndrewNeural', label: 'Andrew (Mỹ - Nam)' },
+    { value: 'en-US-EmmaNeural', label: 'Emma (Mỹ - Nữ)' },
+    { value: 'en-US-BrianNeural', label: 'Brian (Mỹ - Nam)' },
+    { value: 'en-US-GuyNeural', label: 'Guy (Mỹ - Nam)' },
+    { value: 'en-US-JennyNeural', label: 'Jenny (Mỹ - Nữ)' },
+    { value: 'en-US-AriaNeural', label: 'Aria (Mỹ - Nữ)' },
+    { value: 'en-US-ChristopherNeural', label: 'Christopher (Mỹ - Nam)' }
+  ],
+  openai: [
+    { value: 'alloy', label: 'Alloy (Cân bằng, đa dụng)' },
+    { value: 'echo', label: 'Echo (Nam, ấm áp)' },
+    { value: 'fable', label: 'Fable (Nam, rõ ràng)' },
+    { value: 'onyx', label: 'Onyx (Nam trầm, chuyên nghiệp)' },
+    { value: 'nova', label: 'Nova (Nữ, tươi sáng)' },
+    { value: 'shimmer', label: 'Shimmer (Nữ, truyền cảm)' }
+  ],
+  clone: [
+    { value: 'medical', label: 'Thuyết trình y khoa (Medical Mode)' },
+    { value: 'casual', label: 'Trò chuyện tự nhiên (Casual Mode)' },
+    { value: 'academic', label: 'Báo cáo nghiên cứu (Academic Mode)' }
+  ]
+};
+
+function initTtsSettings() {
+  const providerSelect = document.getElementById('ttsProviderSelect');
+  if (providerSelect) {
+    providerSelect.value = state.ttsProvider;
+  }
+  populateTtsVoices();
+  checkTtsConnection();
+}
+
+function populateTtsVoices() {
+  const provider = state.ttsProvider;
+  const voiceSelect = document.getElementById('ttsVoiceSelect');
+  if (!voiceSelect) return;
+  
+  const options = VOICE_OPTIONS[provider] || [];
+  voiceSelect.innerHTML = options.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('');
+  
+  const savedVoice = state.ttsVoice;
+  const isValidVoice = options.some(opt => opt.value === savedVoice);
+  if (isValidVoice) {
+    voiceSelect.value = savedVoice;
+  } else {
+    voiceSelect.value = options[0]?.value || '';
+    state.ttsVoice = voiceSelect.value;
+    localStorage.setItem('ttsVoice', state.ttsVoice);
+  }
+}
+
+function onTtsProviderChange() {
+  const providerSelect = document.getElementById('ttsProviderSelect');
+  if (!providerSelect) return;
+  state.ttsProvider = providerSelect.value;
+  localStorage.setItem('ttsProvider', state.ttsProvider);
+  populateTtsVoices();
+  checkTtsConnection();
+}
+
+function onTtsVoiceChange() {
+  const voiceSelect = document.getElementById('ttsVoiceSelect');
+  if (!voiceSelect) return;
+  state.ttsVoice = voiceSelect.value;
+  localStorage.setItem('ttsVoice', state.ttsVoice);
+}
+
+async function checkTtsConnection() {
+  const statusEl = document.getElementById('ttsConnectionStatus');
+  if (!statusEl) return;
+  
+  if (state.ttsProvider === 'clone') {
+    statusEl.innerHTML = `<span style="color:#f59e0b">⏳ Đang kết nối tới máy chủ clone cục bộ (cổng 8005)...</span>`;
+    try {
+      const res = await fetch(`${API_BASE}/api/health`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (data.status === 'ok') {
+        statusEl.innerHTML = `<span style="color:#10b981">✅ Kết nối máy chủ Clone thành công (Thiết bị: ${data.device.toUpperCase()})</span>`;
+      } else {
+        statusEl.innerHTML = `<span style="color:#ef4444">❌ Lỗi máy chủ Clone: Trạng thái không đúng</span>`;
+      }
+    } catch (err) {
+      statusEl.innerHTML = `<span style="color:#ef4444">❌ Không thể kết nối tới máy chủ Clone cục bộ (cổng 8005). Hãy chạy start_mastery_app.py để khởi động.</span>`;
+    }
+  } else if (state.ttsProvider === 'openai') {
+    statusEl.innerHTML = `<span style="color:#3b82f6">💡 OpenAI TTS sử dụng kết nối Internet và key OpenAI API.</span>`;
+  } else {
+    statusEl.innerHTML = `<span style="color:#10b981">✅ Microsoft Edge-TTS (Cục bộ/Mạng) sẵn sàng.</span>`;
+  }
+}
+
+window.onTtsProviderChange = onTtsProviderChange;
+window.onTtsVoiceChange = onTtsVoiceChange;
+window.initTtsSettings = initTtsSettings;
+
 function toggleHVPT() {
   state.hvptMode = !state.hvptMode;
   localStorage.setItem('hvptMode', state.hvptMode ? '1' : '0');
@@ -771,23 +874,29 @@ function speak(text, rate, voice) {
     window.speechSynthesis.cancel();
   }
 
-  // Nếu không chỉ định giọng và đang bật HVPT -> xoay vòng giọng khác nhau
-  if (!voice && state.hvptMode) {
-    voice = HVPT_VOICES[hvptIdx % HVPT_VOICES.length];
-    hvptIdx++;
+  const activeProvider = state.ttsProvider || 'edge';
+  
+  // Xác định giọng đọc
+  let activeVoice = voice;
+  if (!activeVoice) {
+    if (activeProvider === 'edge' && state.hvptMode) {
+      activeVoice = HVPT_VOICES[hvptIdx % HVPT_VOICES.length];
+      hvptIdx++;
+    } else {
+      activeVoice = state.ttsVoice;
+    }
   }
 
   const activeRate = rate !== undefined ? rate : (state.ttsSpeed || 0.85);
 
   const encodedText = encodeURIComponent(text);
-  const voiceParam = voice ? `&voice=${encodeURIComponent(voice)}` : '';
-  const audioUrl = `${API_BASE}/api/tts?text=${encodedText}&rate=${activeRate}${voiceParam}`;
+  const audioUrl = `${API_BASE}/api/tts?text=${encodedText}&rate=${activeRate}&provider=${activeProvider}&voice=${encodeURIComponent(activeVoice)}`;
 
   const audio = new Audio(audioUrl);
   currentAudio = audio;
 
   audio.play().catch(err => {
-    console.warn('Dynamic Edge-TTS playback failed, falling back to Web Speech API', err);
+    console.warn('Dynamic TTS playback failed, falling back to Web Speech API', err);
     fallbackWebSpeech(text, activeRate);
   });
 }
@@ -816,8 +925,11 @@ function toggleSettingsPanel() {
         input.placeholder = "https://xxx.trycloudflare.com (Để trống nếu chạy offline/local)";
       }
     }
-    if (panel.style.display !== 'none' && typeof getPhonemeServiceStatus === 'function') {
-      getPhonemeServiceStatus(true);
+    if (panel.style.display !== 'none') {
+      if (typeof getPhonemeServiceStatus === 'function') {
+        getPhonemeServiceStatus(true);
+      }
+      initTtsSettings();
     }
   }
 }
@@ -2042,6 +2154,7 @@ async function init() {
   renderSchedule();
   renderLecture();
   renderPracticeTracker();
+  initTtsSettings();
   
   // Đồng bộ giá trị chọn tốc độ đọc mẫu khi khởi chạy
   document.querySelectorAll('.tts-speed-selector').forEach(select => {

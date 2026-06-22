@@ -270,7 +270,7 @@ function getMechanicalFeedback(word) {
   return `💡 Cấu âm cơ học: Hãy đọc chậm, chú ý phát âm rõ nét từng phụ âm đầu và phụ âm cuối. Nghe phát âm mẫu từ Edge-TTS và luyện tập lại.`;
 }
 
-// ── API: Text-to-Speech via Microsoft Edge TTS ───────────────
+// ── API: Text-to-Speech via Microsoft Edge / OpenAI / Local Clone ───────────
 const CACHE_DIR = path.join(__dirname, 'cache');
 if (!fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, { recursive: true });
@@ -282,7 +282,8 @@ app.get('/api/tts', (req, res) => {
     return res.status(400).json({ error: 'Missing text parameter' });
   }
 
-  const voice = req.query.voice || 'en-US-AvaNeural';
+  const provider = req.query.provider || 'edge';
+  const voice = req.query.voice || (provider === 'openai' ? 'alloy' : 'en-US-AvaNeural');
   let rateStr = '+0%';
   const rateVal = parseFloat(req.query.rate || '1.0');
   if (rateVal !== 1.0) {
@@ -290,33 +291,121 @@ app.get('/api/tts', (req, res) => {
     rateStr = diff >= 0 ? `+${diff}%` : `${diff}%`;
   }
 
-  const hash = crypto.createHash('md5').update(`${text}_${voice}_${rateStr}`).digest('hex');
-  const cachePath = path.join(CACHE_DIR, `${hash}.mp3`);
+  const hash = crypto.createHash('md5').update(`${text}_${provider}_${voice}_${rateStr}`).digest('hex');
+  const cachePathMp3 = path.join(CACHE_DIR, `${hash}.mp3`);
+  const cachePathWav = path.join(CACHE_DIR, `${hash}.wav`);
+  const useWav = (provider === 'clone');
+  const cachePath = useWav ? cachePathWav : cachePathMp3;
 
-  // Cache hit — nhưng chỉ dùng nếu file KHÔNG rỗng (tránh phục vụ file lỗi)
+  // Cache hit — nhưng chỉ dùng nếu file KHÔNG rỗng
   if (fs.existsSync(cachePath) && fs.statSync(cachePath).size > 0) {
     return res.sendFile(cachePath);
   }
 
-  const edgeTtsCli = '/Users/mac/Library/Python/3.9/bin/edge-tts';
-  // edge-tts thi thoảng trả "NoAudioReceived" tạm thời -> thử lại tối đa 3 lần
-  function attempt(triesLeft) {
-    try { if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath); } catch (e) {}
-    execFile(edgeTtsCli, [
-      '--text', text,
-      '--voice', voice,
-      `--rate=${rateStr}`,
-      '--write-media', cachePath
-    ], (error) => {
-      const ok = !error && fs.existsSync(cachePath) && fs.statSync(cachePath).size > 0;
-      if (ok) return res.sendFile(cachePath);
-      try { if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath); } catch (e) {} // xóa file rỗng
-      if (triesLeft > 0) return setTimeout(() => attempt(triesLeft - 1), 400);
-      console.error('Edge-TTS generation error (đã thử lại):', error && error.message);
-      res.status(500).json({ error: 'Failed to generate speech' });
+  if (provider === 'openai') {
+    // Tự động tìm OpenAI API Key từ environment hoặc fallback ~/.zshrc
+    let openAiKey = process.env.OPENAI_API_KEY;
+    if (!openAiKey) {
+      try {
+        const zshrcPath = path.join(require('os').homedir(), '.zshrc');
+        if (fs.existsSync(zshrcPath)) {
+          const content = fs.readFileSync(zshrcPath, 'utf8');
+          const match = content.match(/export\s+OPENAI_API_KEY=["']?([^"'\s]+)["']?/);
+          if (match) {
+            openAiKey = match[1];
+            console.log('🗝️ Loaded OPENAI_API_KEY from ~/.zshrc fallback in server.js');
+          }
+        }
+      } catch (e) {
+        console.error('Error reading ~/.zshrc for OpenAI Key:', e.message);
+      }
+    }
+
+    if (!openAiKey) {
+      return res.status(500).json({ error: 'OPENAI_API_KEY không tìm thấy trên hệ thống.' });
+    }
+
+    fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'tts-1',
+        input: text,
+        voice: voice,
+        speed: rateVal
+      })
+    })
+    .then(async (apiRes) => {
+      if (!apiRes.ok) {
+        const errText = await apiRes.text();
+        throw new Error(errText);
+      }
+      const buffer = Buffer.from(await apiRes.arrayBuffer());
+      fs.writeFileSync(cachePath, buffer);
+      res.sendFile(cachePath);
+    })
+    .catch((err) => {
+      console.error('OpenAI TTS Error:', err.message);
+      res.status(500).json({ error: 'Failed to generate speech with OpenAI', details: err.message });
     });
+
+  } else if (provider === 'clone') {
+    // Gọi FastAPI voice clone server ở cổng 8005
+    // exaggeration: y khoa (medical) -> 0.4, casual -> 0.6, academic -> 0.3
+    let exaggeration = 0.5;
+    if (voice === 'medical') exaggeration = 0.4;
+    else if (voice === 'casual') exaggeration = 0.6;
+    else if (voice === 'academic') exaggeration = 0.3;
+
+    fetch(`http://127.0.0.1:8005/api/clone-tts?text=${encodeURIComponent(text)}&exaggeration=${exaggeration}`)
+    .then(async (apiRes) => {
+      if (!apiRes.ok) {
+        throw new Error(`FastAPI returned status ${apiRes.status}`);
+      }
+      const buffer = Buffer.from(await apiRes.arrayBuffer());
+      fs.writeFileSync(cachePath, buffer);
+      res.sendFile(cachePath);
+    })
+    .catch((err) => {
+      console.error('FastAPI Clone TTS Error:', err.message);
+      res.status(500).json({ error: 'Máy chủ Clone giọng nói cục bộ (cổng 8005) chưa được bật hoặc gặp lỗi.', details: err.message });
+    });
+
+  } else {
+    // Edge-TTS (Default)
+    const edgeTtsCli = '/Users/mac/Library/Python/3.9/bin/edge-tts';
+    function attempt(triesLeft) {
+      try { if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath); } catch (e) {}
+      execFile(edgeTtsCli, [
+        '--text', text,
+        '--voice', voice,
+        `--rate=${rateStr}`,
+        '--write-media', cachePath
+      ], (error) => {
+        const ok = !error && fs.existsSync(cachePath) && fs.statSync(cachePath).size > 0;
+        if (ok) return res.sendFile(cachePath);
+        try { if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath); } catch (e) {}
+        if (triesLeft > 0) return setTimeout(() => attempt(triesLeft - 1), 400);
+        console.error('Edge-TTS generation error (đã thử lại):', error && error.message);
+        res.status(500).json({ error: 'Failed to generate speech' });
+      });
+    }
+    attempt(2);
   }
-  attempt(2);
+});
+
+// Proxy endpoint to check local Python FastAPI voice clone server status
+app.get('/api/health', (req, res) => {
+  fetch('http://127.0.0.1:8005/api/health')
+    .then(apiRes => {
+      if (!apiRes.ok) throw new Error(`FastAPI status ${apiRes.status}`);
+      return apiRes.json();
+    })
+    .then(data => res.json(data))
+    .catch(err => res.status(500).json({ status: 'error', message: err.message }));
 });
 
 // ── API: Phoneme-level Pronunciation Scoring (mã nguồn mở, miễn phí) ──

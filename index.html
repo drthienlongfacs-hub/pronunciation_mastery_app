@@ -65,6 +65,32 @@
       <div id="aiConnectionStatus" style="margin-top:10px; font-size:0.75rem; color:var(--text-secondary); line-height:1.45;">
         Trạng thái kết nối AI sẽ được kiểm tra tự động khi tải trang.
       </div>
+      
+      <!-- ── Voice Synthesis (TTS) Settings ── -->
+      <hr style="border:0; border-top:1px solid var(--border-subtle); margin:15px 0;">
+      <h4 style="font-size:0.85rem; font-weight:700; color:var(--text-accent); margin-bottom:6px; letter-spacing:0.5px;">🗣️ CẤU HÌNH GIỌNG ĐỌC MẪU (VOICE SYNTHESIS)</h4>
+      <p style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:10px; line-height:1.45;">
+        Chọn nhà cung cấp và giọng đọc mẫu chuẩn cho các bài học phát âm.
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px;">
+        <div style="flex:1; min-width:200px;">
+          <label style="display:block; font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; font-weight:600; text-transform:uppercase;">Nhà cung cấp giọng đọc</label>
+          <select id="ttsProviderSelect" onchange="onTtsProviderChange()" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); color:white; border-radius:4px; padding:6px; font-size:0.8rem; outline:none; cursor:pointer;">
+            <option value="edge">Microsoft Edge-TTS (HVPT - Đa giọng)</option>
+            <option value="openai">OpenAI Natural TTS (Omni Voice)</option>
+            <option value="clone">Giọng Clone cá nhân (Chatterbox Local)</option>
+          </select>
+        </div>
+        <div style="flex:1; min-width:200px;">
+          <label style="display:block; font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; font-weight:600; text-transform:uppercase;">Giọng đọc / Phong cách</label>
+          <select id="ttsVoiceSelect" onchange="onTtsVoiceChange()" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid var(--border-subtle); color:white; border-radius:4px; padding:6px; font-size:0.8rem; outline:none; cursor:pointer;">
+            <!-- Nạp động -->
+          </select>
+        </div>
+      </div>
+      <div id="ttsConnectionStatus" style="font-size:0.75rem; color:var(--text-secondary); line-height:1.45;">
+        Đang kiểm tra kết nối máy chủ giọng nói...
+      </div>
     </div>
 
     <!-- ═══ TAB: DASHBOARD ═══ -->

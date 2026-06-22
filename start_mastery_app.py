@@ -12,6 +12,7 @@ TUNNEL_LOG = "/tmp/cf_mastery_tunnel.log"
 def kill_port_processes():
     try:
         subprocess.run("pkill -f 'node server.js'", shell=True)
+        subprocess.run("pkill -f 'voice_clone_server.py'", shell=True)
         subprocess.run("pkill -f 'cloudflared tunnel'", shell=True)
         time.sleep(2)
     except Exception as e:
@@ -51,10 +52,21 @@ def main():
     print("🧹 Cleaning up old processes...")
     kill_port_processes()
     
+    print("🎙️ Starting Python FastAPI Voice Clone Server...")
+    fastapi_log = open("fastapi_server.log", "w")
+    venv_py = "/Users/mac/.voice-clone-env/bin/python"
+    subprocess.Popen(
+        [venv_py, "voice_clone_server.py"],
+        stdout=fastapi_log,
+        stderr=fastapi_log
+    )
+    
     print("🚀 Starting Express Local Server...")
     server_log = open("server.log", "w")
-    subprocess.Popen(["node", "server.js"], stdout=server_log, stderr=server_log)
-    time.sleep(2)
+    node_env = os.environ.copy()
+    node_env["PORT"] = "3000"
+    subprocess.Popen(["node", "server.js"], stdout=server_log, stderr=server_log, env=node_env)
+    time.sleep(3)
     
     print("🌐 Launching Cloudflare Tunnel...")
     if os.path.exists(TUNNEL_LOG):
