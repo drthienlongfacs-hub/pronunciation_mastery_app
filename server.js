@@ -303,21 +303,32 @@ app.get('/api/tts', (req, res) => {
   }
 
   if (provider === 'openai') {
-    // Tự động tìm OpenAI API Key từ environment hoặc fallback ~/.zshrc
+    // Tự động tìm OpenAI API Key & Base URL từ environment hoặc fallback ~/.zshrc
     let openAiKey = process.env.OPENAI_API_KEY;
-    if (!openAiKey) {
+    let openAiBaseUrl = process.env.OPENAI_BASE_URL;
+
+    if (!openAiKey || !openAiBaseUrl) {
       try {
         const zshrcPath = path.join(require('os').homedir(), '.zshrc');
         if (fs.existsSync(zshrcPath)) {
           const content = fs.readFileSync(zshrcPath, 'utf8');
-          const match = content.match(/export\s+OPENAI_API_KEY=["']?([^"'\s]+)["']?/);
-          if (match) {
-            openAiKey = match[1];
-            console.log('🗝️ Loaded OPENAI_API_KEY from ~/.zshrc fallback in server.js');
+          if (!openAiKey) {
+            const matchKey = content.match(/export\s+OPENAI_API_KEY=["']?([^"'\s]+)["']?/);
+            if (matchKey) {
+              openAiKey = matchKey[1];
+              console.log('🗝️ Loaded OPENAI_API_KEY from ~/.zshrc fallback in server.js');
+            }
+          }
+          if (!openAiBaseUrl) {
+            const matchBase = content.match(/export\s+OPENAI_BASE_URL=["']?([^"'\s]+)["']?/);
+            if (matchBase) {
+              openAiBaseUrl = matchBase[1];
+              console.log('🗝️ Loaded OPENAI_BASE_URL from ~/.zshrc fallback in server.js');
+            }
           }
         }
       } catch (e) {
-        console.error('Error reading ~/.zshrc for OpenAI Key:', e.message);
+        console.error('Error reading ~/.zshrc for OpenAI config:', e.message);
       }
     }
 
@@ -325,7 +336,10 @@ app.get('/api/tts', (req, res) => {
       return res.status(500).json({ error: 'OPENAI_API_KEY không tìm thấy trên hệ thống.' });
     }
 
-    fetch('https://api.openai.com/v1/audio/speech', {
+    const baseUrl = (openAiBaseUrl || 'https://api.openai.com/v1').replace(/\/+$/, '');
+    const speechUrl = `${baseUrl}/audio/speech`;
+
+    fetch(speechUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAiKey}`,
@@ -348,8 +362,31 @@ app.get('/api/tts', (req, res) => {
       res.sendFile(cachePath);
     })
     .catch((err) => {
-      console.error('OpenAI TTS Error:', err.message);
-      res.status(500).json({ error: 'Failed to generate speech with OpenAI', details: err.message });
+      console.warn('⚠️ OpenAI TTS failed:', err.message, '- Falling back to Edge-TTS');
+      
+      // Map OpenAI voice to Edge voice
+      let edgeVoice = 'en-US-AvaNeural';
+      if (voice === 'onyx') edgeVoice = 'en-US-AndrewNeural';
+      else if (voice === 'echo') edgeVoice = 'en-US-GuyNeural';
+      else if (voice === 'fable') edgeVoice = 'en-US-ChristopherNeural';
+      else if (voice === 'nova') edgeVoice = 'en-US-EmmaNeural';
+      else if (voice === 'shimmer') edgeVoice = 'en-US-AvaNeural';
+      
+      const edgeTtsCli = '/Users/mac/Library/Python/3.9/bin/edge-tts';
+      execFile(edgeTtsCli, [
+        '--text', text,
+        '--voice', edgeVoice,
+        `--rate=${rateStr}`,
+        '--write-media', cachePath
+      ], (error) => {
+        const ok = !error && fs.existsSync(cachePath) && fs.statSync(cachePath).size > 0;
+        if (ok) {
+          return res.sendFile(cachePath);
+        }
+        try { if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath); } catch (e) {}
+        console.error('Fallback Edge-TTS also failed:', error && error.message);
+        res.status(500).json({ error: 'Failed to generate speech with OpenAI and fallback Edge-TTS', details: err.message });
+      });
     });
 
   } else if (provider === 'clone') {
