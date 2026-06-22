@@ -32,8 +32,47 @@ const state = {
   activeBreathingExerciseId: null,
   
   // TTS configuration
-  ttsSpeed: parseFloat(localStorage.getItem('ttsSpeed') || '0.85')
+  ttsSpeed: parseFloat(localStorage.getItem('ttsSpeed') || '0.85'),
+
+  // Sentence source mode: 'shadowing' | 'diagnostic'
+  sentenceMode: 'shadowing'
 };
+
+// ── Sentence Source Helper ────────────────────────────────────
+function getActiveSentences() {
+  if (state.sentenceMode === 'diagnostic') {
+    // Convert diagnostic format to shadowing-compatible format
+    return (EXERCISES.diagnosticSentences || []).map(d => ({
+      text: d.text,
+      ipa: '',
+      focus: d.errorType + ' ' + d.severity,
+      tips: d.tip,
+      difficulty: d.severity === '🔴' ? 4 : 3,
+      targetWords: d.targetWords
+    }));
+  }
+  return EXERCISES.shadowingSentences.sentences;
+}
+
+function toggleSentenceMode() {
+  state.sentenceMode = state.sentenceMode === 'shadowing' ? 'diagnostic' : 'shadowing';
+  state.currentSentenceIdx = 0;
+  updateSentenceDisplay();
+  updateSentenceModeUI();
+}
+
+function updateSentenceModeUI() {
+  const btn = document.getElementById('sentenceModeToggle');
+  if (btn) {
+    btn.textContent = state.sentenceMode === 'diagnostic'
+      ? '🎯 Chế độ: Diagnostic Test (10 câu)'
+      : '🗣️ Chế độ: Shadowing Practice';
+    btn.style.background = state.sentenceMode === 'diagnostic'
+      ? 'rgba(239,68,68,0.2)' : 'rgba(99,102,241,0.2)';
+    btn.style.color = state.sentenceMode === 'diagnostic'
+      ? '#EF4444' : 'var(--accent-secondary)';
+  }
+}
 
 // ── Tab Navigation ────────────────────────────────────────────
 function switchTab(tabId) {
@@ -185,7 +224,7 @@ async function toggleRecording() {
     // Chấm âm vị thật từ audio đã thu (nếu bật)
     if (typeof phonemeStopAndScore === 'function') {
       const sIdx = state.currentSentenceIdx;
-      const sText = EXERCISES.shadowingSentences.sentences[sIdx]?.text;
+      const sText = getActiveSentences()[sIdx]?.text;
       if (sText) phonemeStopAndScore(sText, 'phonemePanel', 'phonemeContent', `sent:${sIdx}`);
     }
 
@@ -384,7 +423,7 @@ function alignWords(targetWords, spokenWords) {
 
 // ── Compare ASR result with target ────────────────────────────
 async function compareWithTarget(transcript) {
-  const sentences = EXERCISES.shadowingSentences.sentences;
+  const sentences = getActiveSentences();
   const originalTarget = sentences[state.currentSentenceIdx].text;
   const target = originalTarget.toLowerCase();
   const spoken = transcript.toLowerCase();
@@ -672,7 +711,7 @@ function getLocalAiFeedback(targetText, spokenText) {
 
 // ── Sentence Navigation ───────────────────────────────────────
 function updateSentenceDisplay() {
-  const sentences = EXERCISES.shadowingSentences.sentences;
+  const sentences = getActiveSentences();
   const s = sentences[state.currentSentenceIdx];
   const target = document.getElementById('recorder-target');
   
@@ -689,13 +728,13 @@ function updateSentenceDisplay() {
 }
 
 function nextSentence() {
-  const sentences = EXERCISES.shadowingSentences.sentences;
+  const sentences = getActiveSentences();
   state.currentSentenceIdx = (state.currentSentenceIdx + 1) % sentences.length;
   updateSentenceDisplay();
 }
 
 function prevSentence() {
-  const sentences = EXERCISES.shadowingSentences.sentences;
+  const sentences = getActiveSentences();
   state.currentSentenceIdx = (state.currentSentenceIdx - 1 + sentences.length) % sentences.length;
   updateSentenceDisplay();
 }
@@ -1505,7 +1544,7 @@ function filterUrologyDictionary() {
 }
 
 function speakCurrentSentence() {
-  const sentences = EXERCISES.shadowingSentences.sentences;
+  const sentences = getActiveSentences();
   const s = sentences[state.currentSentenceIdx];
   if (s) speak(s.text);
 }

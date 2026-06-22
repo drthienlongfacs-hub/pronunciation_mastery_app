@@ -61,11 +61,10 @@ def main():
         try: os.remove(TUNNEL_LOG)
         except: pass
         
-    tunnel_log_file = open(TUNNEL_LOG, "w")
     tunnel_proc = subprocess.Popen(
-        ["cloudflared", "tunnel", "--url", f"http://localhost:{PORT}"],
+        ["cloudflared", "tunnel", "--url", f"http://localhost:{PORT}", "--logfile", TUNNEL_LOG],
         stdout=subprocess.DEVNULL,
-        stderr=tunnel_log_file
+        stderr=subprocess.DEVNULL
     )
     
     url = None
@@ -82,7 +81,6 @@ def main():
                 
     if not url:
         print("❌ Failed to capture Tunnel URL. Check /tmp/cf_mastery_tunnel.log")
-        tunnel_log_file.close()
         tunnel_proc.terminate()
         return
         
@@ -123,7 +121,6 @@ def main():
     except KeyboardInterrupt:
         print("\nStopping server and tunnel...")
     finally:
-        tunnel_log_file.close()
         tunnel_proc.terminate()
         kill_port_processes()
         print("Done!")

@@ -35,6 +35,19 @@ const EXERCISES = {
       content: "Huấn luyện phát âm là quá trình chuyển hóa từ kiểm soát ý thức sang trí nhớ cơ bắp tự động (muscle memory). Test lại 10 câu chẩn đoán bằng ASR để đo lường độ chính xác (Accuracy). Thiết lập vòng lặp phản hồi thần kinh tự sửa lỗi (Self-monitoring) và duy trì luyện tập 15 phút mỗi ngày trong 12 tuần để hình thành phản xạ tự nhiên."
     }
   },
+  // ── DIAGNOSTIC SENTENCES — 10 câu test ASR (PDF Ngày 1 & Ngày 7) ──
+  diagnosticSentences: [
+    { id: 1, text: "Ethics is the foundation of this organization. They believe in the power of thinking through every decision.", targetWords: ["ethics","this","they","the","thinking","through"], errorType: "/θ/ /ð/", severity: "🔴", tip: "ethics: lưỡi giữa răng. they/the/this/thinking/through: tất cả cần /θ/ hoặc /ð/." },
+    { id: 2, text: "Corporate governance builds trust and attracts investment. It shaped how organizations risk their reputation.", targetWords: ["builds","attracts","shaped","risk"], errorType: "Final clusters", severity: "🔴", tip: "builds: /ldz/. attracts: /kts/. shaped: /pt/. risk: /sk/." },
+    { id: 3, text: "The PhD student published a paper on corporate policy regarding patient care.", targetWords: ["PhD","published","paper","corporate","policy","patient","care"], errorType: "Aspiration", severity: "🟡", tip: "PhD: bật /p/ mạnh. paper/policy/patient: bật hơi rõ." },
+    { id: 4, text: "Corporate integrity maintains the organization's urological standards.", targetWords: ["corporate","integrity","maintains"], errorType: "Word stress", severity: "🟡", tip: "COR-po-rate (âm 1). in-TEG-ri-ty (âm 2). main-TAINS (âm 2)." },
+    { id: 5, text: "They aim to guide the moral compass of every healthcare professional.", targetWords: ["they aim to guide","moral compass"], errorType: "Syllable fragmentation", severity: "🔴", tip: "Nối 'they_aim_to_guide' mượt. MO-ral COM-pass: 2 từ riêng." },
+    { id: 6, text: "The distinct advantage of robust governance concludes with measurable outcomes.", targetWords: ["distinct","robust","concludes","measurable"], errorType: "Mixed", severity: "🟡", tip: "dis-TINCT: /ŋkt/. ro-BUST: /st/. meas-UR-a-ble: nhấn âm 2." },
+    { id: 7, text: "Whether the thesis addresses therapeutic concerns depends on thorough analysis.", targetWords: ["whether","thesis","therapeutic","thorough"], errorType: "/θ/ /ð/", severity: "🔴", tip: "4 từ đều có /θ/ hoặc /ð/. Đặt lưỡi giữa răng cho mỗi từ." },
+    { id: 8, text: "Stakeholders trust the system that shaped their investment risks.", targetWords: ["stakeholders","trust","shaped","risks"], errorType: "Final clusters", severity: "🔴", tip: "trust: /st/. shaped: /pt/. risks: /sks/." },
+    { id: 9, text: "A physician with empathy and ethical standards attracts respect.", targetWords: ["physician","empathy","ethical","attracts"], errorType: "Mixed", severity: "🟡", tip: "empathy: /θ/ cuối. ethical: /θ/ giữa. attracts: /kts/." },
+    { id: 10, text: "Three things matter: thinking clearly, acting with integrity, and speaking the truth.", targetWords: ["three","things","thinking","integrity","truth"], errorType: "/θ/ + stress", severity: "🔴", tip: "5 từ có /θ/. integrity: in-TEG-ri-ty nhấn âm 2." },
+  ],
   // ── DAILY PRACTICE EXERCISES (Bài tập thực hành cho 7 ngày) ──
   dailyExercises: {
     1: [
