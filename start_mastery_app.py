@@ -179,6 +179,7 @@ def main():
         
         subprocess.run("git add data/tunnel_url.json", shell=True, env=env)
         subprocess.run('git commit -m "chore: update live tunnel URL [skip ci]"', shell=True, env=env)
+        subprocess.run("git pull origin feature/pronunciation-coach --rebase", shell=True, env=env)
         subprocess.run("git push origin feature/pronunciation-coach", shell=True, env=env)
         print("✅ GitHub Pages updated successfully!")
     except Exception as e:
@@ -237,6 +238,7 @@ def main():
                     env.pop("GITHUB_TOKEN", None)
                     subprocess.run("git add data/tunnel_url.json", shell=True, env=env)
                     subprocess.run('git commit -m "chore: update live tunnel URL [skip ci]"', shell=True, env=env)
+                    subprocess.run("git pull origin feature/pronunciation-coach --rebase", shell=True, env=env)
                     subprocess.run("env -u GITHUB_TOKEN git push origin feature/pronunciation-coach", shell=True, env=env)
                     print("✅ GitHub Pages updated successfully with new URL!")
             time.sleep(2)
