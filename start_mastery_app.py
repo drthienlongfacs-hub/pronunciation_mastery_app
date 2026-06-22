@@ -127,13 +127,44 @@ def main():
     try:
         while True:
             if tunnel_proc.poll() is not None:
-                print("Cloudflared stopped unexpectedly.")
-                break
+                print("⚠️ Cloudflared stopped. Restarting tunnel in 3 seconds...")
+                time.sleep(3)
+                if os.path.exists(TUNNEL_LOG):
+                    try: os.remove(TUNNEL_LOG)
+                    except: pass
+                tunnel_proc = subprocess.Popen(
+                    ["cloudflared", "tunnel", "--url", f"http://localhost:{PORT}", "--logfile", TUNNEL_LOG],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+                print("⏳ Waiting for new Tunnel URL...")
+                new_url = None
+                for _ in range(30):
+                    time.sleep(1)
+                    if os.path.exists(TUNNEL_LOG):
+                        with open(TUNNEL_LOG) as f:
+                            content = f.read()
+                        urls = re.findall(r"https://[a-z0-9-]+\.trycloudflare\.com", content)
+                        if urls:
+                            new_url = urls[-1]
+                            break
+                if new_url:
+                    print(f"✅ Re-captured Live URL: {new_url}")
+                    with open("data/tunnel_url.json", "w") as f:
+                        json.dump({"url": new_url, "updated_at": time.strftime('%H:%M %d/%m/%Y')}, f, indent=2)
+                    send_telegram(new_url)
+                    env = os.environ.copy()
+                    env.pop("GITHUB_TOKEN", None)
+                    subprocess.run("git add data/tunnel_url.json", shell=True, env=env)
+                    subprocess.run('git commit -m "chore: update live tunnel URL [skip ci]"', shell=True, env=env)
+                    subprocess.run("env -u GITHUB_TOKEN git push origin feature/pronunciation-coach", shell=True, env=env)
+                    print("✅ GitHub Pages updated successfully with new URL!")
             time.sleep(2)
     except KeyboardInterrupt:
         print("\nStopping server and tunnel...")
     finally:
-        tunnel_proc.terminate()
+        try: tunnel_proc.terminate()
+        except: pass
         kill_port_processes()
         print("Done!")
 
