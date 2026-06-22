@@ -18,7 +18,7 @@ def kill_port_processes():
     except Exception as e:
         print(f"Error cleaning processes: {e}")
 
-def send_telegram(url):
+def send_telegram(url, provider="cloudflare", ip=""):
     if not os.path.exists(TELEGRAM_CONFIG):
         print(f"Telegram config not found: {TELEGRAM_CONFIG}")
         return False
@@ -27,11 +27,15 @@ def send_telegram(url):
         cfg = json.load(f)
 
     msg = (
-        f"🆕 Pronunciation Mastery Live Tunnel (Local Server)\n\n"
+        f"🆕 Pronunciation Mastery Live Tunnel ({provider.upper()})\n\n"
         f"URL: {url}\n"
-        f"Port: {PORT}\n"
+    )
+    if provider == "localtunnel" and ip:
+        msg += f"🔑 IP của máy Mac (nhập IP này để bypass nếu được hỏi): {ip}\n"
+        
+    msg += (
         f"Thời gian: {time.strftime('%H:%M %d/%m/%Y')}\n\n"
-        f"Bác sĩ bấm vào link trên để học với giọng đọc Edge-TTS bản xứ (yêu cầu máy Mac đang mở và chạy server)!"
+        f"Bác sĩ bấm vào link trên để học với giọng đọc mẫu chuẩn và Giọng Clone Bản xứ (Native-Prosody) của chính mình!"
     )
 
     try:
@@ -74,6 +78,12 @@ def start_tunnel_process(provider="cloudflare"):
         return proc, LT_LOG, r"https://[a-z0-9-]+\.loca\.lt"
 
 def main():
+    # Fetch public IP for localtunnel bypass warning
+    try:
+        public_ip = urllib.request.urlopen("https://api.ipify.org", timeout=3).read().decode().strip()
+    except Exception:
+        public_ip = "Không rõ"
+        
     print("🧹 Cleaning up old processes...")
     kill_port_processes()
     
@@ -158,7 +168,7 @@ def main():
         return
         
     print(f"\n✅ Captured Live URL ({provider}): {url}")
-    if send_telegram(url):
+    if send_telegram(url, provider, public_ip):
         print("📲 Live link sent to Telegram!")
     else:
         print("⚠️ Failed to send Telegram message.")
@@ -232,7 +242,7 @@ def main():
                     
                     with open("data/tunnel_url.json", "w") as f:
                         json.dump({"url": new_url, "updated_at": time.strftime('%H:%M %d/%m/%Y')}, f, indent=2)
-                    send_telegram(new_url)
+                    send_telegram(new_url, provider, public_ip)
                     
                     env = os.environ.copy()
                     env.pop("GITHUB_TOKEN", None)
