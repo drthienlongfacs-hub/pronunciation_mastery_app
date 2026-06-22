@@ -832,18 +832,53 @@ async function checkTtsConnection() {
   if (!statusEl) return;
   
   if (state.ttsProvider === 'clone') {
-    statusEl.innerHTML = `<span style="color:#f59e0b">⏳ Đang kết nối tới máy chủ clone cục bộ (cổng 8005)...</span>`;
+    statusEl.innerHTML = `<span style="color:#f59e0b">⏳ Đang kết nối tới máy chủ clone AI...</span>`;
+    
+    let success = false;
+    let deviceName = '';
+    
+    // 1. Thử kết nối với API_BASE hiện tại
     try {
       const res = await fetch(`${API_BASE}/api/health`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      if (data.status === 'ok') {
-        statusEl.innerHTML = `<span style="color:#10b981">✅ Kết nối máy chủ Clone thành công (Thiết bị: ${data.device.toUpperCase()})</span>`;
-      } else {
-        statusEl.innerHTML = `<span style="color:#ef4444">❌ Lỗi máy chủ Clone: Trạng thái không đúng</span>`;
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'ok') {
+          success = true;
+          deviceName = data.device || 'unknown';
+        }
       }
     } catch (err) {
-      statusEl.innerHTML = `<span style="color:#ef4444">❌ Không thể kết nối tới máy chủ Clone cục bộ (cổng 8005). Hãy chạy start_mastery_app.py để khởi động.</span>`;
+      console.warn('Kết nối cổng AI hiện tại thất bại:', API_BASE);
+    }
+    
+    // 2. Nếu thất bại, tự sửa lỗi bằng máy chủ phát hiện tự động qua tunnel mới nhất
+    if (!success && state.discoveredTunnelUrl && API_BASE !== state.discoveredTunnelUrl) {
+      console.log('🔄 Đang thử tự sửa lỗi kết nối bằng máy chủ phát hiện mới:', state.discoveredTunnelUrl);
+      try {
+        const res = await fetch(`${state.discoveredTunnelUrl}/api/health`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'ok') {
+            success = true;
+            deviceName = data.device || 'unknown';
+            API_BASE = state.discoveredTunnelUrl;
+            
+            // Cập nhật lại localStorage nếu có cấu hình override cũ bị lỗi
+            if (localStorage.getItem('ai_api_base')) {
+              localStorage.setItem('ai_api_base', state.discoveredTunnelUrl);
+            }
+            console.log('✅ Tự sửa lỗi kết nối thành công! Đã đồng bộ API_BASE sang:', API_BASE);
+          }
+        }
+      } catch (err) {
+        console.error('Thử kết nối máy chủ dự phòng cũng thất bại');
+      }
+    }
+    
+    if (success) {
+      statusEl.innerHTML = `<span style="color:#10b981">✅ Kết nối máy chủ Clone thành công (Thiết bị: ${deviceName.toUpperCase()})</span>`;
+    } else {
+      statusEl.innerHTML = `<span style="color:#ef4444">❌ Không thể kết nối tới máy chủ Clone. Hãy chạy start_mastery_app.py để khởi động. (Cổng thử nghiệm: ${API_BASE})</span>`;
     }
   } else if (state.ttsProvider === 'openai') {
     statusEl.innerHTML = `<span style="color:#3b82f6">💡 OpenAI TTS sử dụng kết nối Internet và key OpenAI API.</span>`;

@@ -66,7 +66,25 @@ def main():
     node_env = os.environ.copy()
     node_env["PORT"] = "3000"
     subprocess.Popen(["node", "server.js"], stdout=server_log, stderr=server_log, env=node_env)
-    time.sleep(3)
+    
+    print("⏳ Waiting for FastAPI Voice Clone Server to be ready (loading model onto MPS)...")
+    fastapi_ready = False
+    for attempt in range(45):
+        try:
+            req = urllib.request.Request("http://127.0.0.1:8005/api/health")
+            with urllib.request.urlopen(req, timeout=1) as response:
+                if response.status == 200:
+                    data = json.loads(response.read().decode())
+                    if data.get("status") == "ok":
+                        print(f"✅ FastAPI Server is ready! Model loaded on: {data.get('device', 'unknown').upper()}")
+                        fastapi_ready = True
+                        break
+        except Exception:
+            pass
+        time.sleep(1)
+        
+    if not fastapi_ready:
+        print("⚠️ Warning: FastAPI Server health check timed out. Proceeding anyway...")
     
     print("🌐 Launching Cloudflare Tunnel...")
     if os.path.exists(TUNNEL_LOG):
