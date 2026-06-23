@@ -223,8 +223,16 @@
         </div>
 
         <div class="asr-result" id="asrResult" style="display:none">
-          <div class="label">Kết quả ASR nhận diện</div>
-          <div class="transcript" id="asrTranscript"></div>
+          <div class="alignment-panel" style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+              <div class="label" style="margin-bottom: 4px;">Câu mẫu đối chiếu (Target)</div>
+              <div class="transcript" id="asrTranscript"></div>
+            </div>
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 4px;">
+              <div class="label" style="margin-bottom: 4px;">Phiên âm nhận diện thực tế (ASR Transcript)</div>
+              <div class="transcript" id="asrSpokenTranscript"></div>
+            </div>
+          </div>
         </div>
 
         <div class="asr-result" id="recordingPlaybackPanel" style="display:none">

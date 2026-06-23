@@ -322,6 +322,8 @@ body::before {
 
 .asr-result .match { color: var(--accent-green); }
 .asr-result .mismatch { color: var(--accent-red); text-decoration: underline wavy; }
+.asr-result .subst { color: var(--accent-amber); text-decoration: underline wavy; }
+.asr-result .insert { color: var(--accent-red); text-decoration: underline; opacity: 0.85; }
 
 /* ── Target Text Display ── */
 .target-text {

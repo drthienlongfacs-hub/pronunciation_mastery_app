@@ -312,7 +312,12 @@ async function toggleRecording() {
         const fullTranscript = (state.accumulatedTranscript + ' ' + sessionTranscript).trim();
         
         asrResult.style.display = 'block';
-        asrTranscript.textContent = fullTranscript;
+        const spokenEl = document.getElementById('asrSpokenTranscript');
+        if (spokenEl) {
+          spokenEl.textContent = fullTranscript;
+        } else {
+          asrTranscript.textContent = fullTranscript;
+        }
         
         compareWithTarget(fullTranscript);
       };
@@ -433,9 +438,13 @@ async function compareWithTarget(transcript) {
   
   const path = alignWords(targetWords, spokenWords);
   const targetOpMap = {};
+  const spokenOpMap = {};
   path.forEach(step => {
     if (step.targetIdx >= 0) {
       targetOpMap[step.targetIdx] = step.op;
+    }
+    if (step.op !== 'delete') {
+      spokenOpMap[step.spokenIdx] = step.op;
     }
   });
   
@@ -456,6 +465,25 @@ async function compareWithTarget(transcript) {
     } else {
       matchedHtml.push(`<span class="mismatch">${originalTw}</span>`);
       errorWords.push(tw);
+    }
+  }
+
+  // Sinh HTML cho phần nhận diện thực tế (spoken)
+  const originalSpokenWords = transcript.split(/\s+/).filter(w => w.length > 0);
+  const spokenHtml = [];
+  for (let j = 0; j < spokenWords.length; j++) {
+    const sw = spokenWords[j];
+    const originalSw = originalSpokenWords[j] || sw;
+    const op = spokenOpMap[j];
+    
+    if (op === 'match') {
+      spokenHtml.push(`<span class="match">${originalSw}</span>`);
+    } else if (op === 'subst') {
+      spokenHtml.push(`<span class="subst">${originalSw}</span>`);
+    } else if (op === 'insert') {
+      spokenHtml.push(`<span class="insert">${originalSw}</span>`);
+    } else {
+      spokenHtml.push(`<span>${originalSw}</span>`);
     }
   }
 
@@ -484,6 +512,10 @@ async function compareWithTarget(transcript) {
   
   // Update ASR display with color coding
   document.getElementById('asrTranscript').innerHTML = matchedHtml.join(' ');
+  const spokenEl = document.getElementById('asrSpokenTranscript');
+  if (spokenEl) {
+    spokenEl.innerHTML = spokenHtml.join(' ');
+  }
   
   // Save accuracy
   state.lastAccuracy = accuracy + '%';
