@@ -14,7 +14,7 @@ function buildItemPool() {
   (EXERCISES.shadowingSentences?.sentences || []).forEach((s, i) => {
     pool.push({
       id: `sent:${i}`, type: 'sentence', text: s.text,
-      hint: s.tips || s.focus || '', ipa: '', sentenceIdx: i,
+      hint: s.tips || s.focus || '', ipa: s.ipa || '', sentenceIdx: i,
       label: s.text,
     });
   });

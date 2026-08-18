@@ -44,7 +44,7 @@ function getActiveSentences() {
     // Convert diagnostic format to shadowing-compatible format
     return (EXERCISES.diagnosticSentences || []).map(d => ({
       text: d.text,
-      ipa: '',
+      ipa: d.ipa || '',
       focus: d.errorType + ' ' + d.severity,
       tips: d.tip,
       difficulty: d.severity === '🔴' ? 4 : 3,

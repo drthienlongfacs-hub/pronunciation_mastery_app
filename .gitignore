@@ -1,8 +1,10 @@
 node_modules/
-cache/*.mp3
+cache/
+*.mp3
+*.wav
 .DS_Store
-*.bak
-*.bak_v2
+*.bak*
+*.before_*
 _phoneme_probe/
 venv/
 *.log
