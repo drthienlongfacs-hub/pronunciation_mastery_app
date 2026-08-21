@@ -250,11 +250,19 @@ async function toggleRecording() {
       currentAudio = null;
     }
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+      try { window.speechSynthesis.cancel(); } catch (e) {}
     }
     if (typeof resetPhonemeUi === 'function') resetPhonemeUi('sentence');
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    recordingStream = stream;
+
+    const inApp = typeof MobileCap !== 'undefined' ? MobileCap.getInAppBrowserName() : null;
+    if (inApp) {
+      const alertEl = document.getElementById('inAppBrowserAlert');
+      if (alertEl) alertEl.style.display = 'block';
+    }
+
+    const caps = typeof MobileCap !== 'undefined' ? MobileCap.detectDeviceCapabilities() : {};
+    const shouldAvoidConcurrentStream = caps.isiOS || caps.isSafari;
+
     state.isRecording = true;
     state.sessionStart = Date.now();
     state.accumulatedTranscript = '';
@@ -263,14 +271,25 @@ async function toggleRecording() {
     btn.classList.add('recording');
     icon.textContent = '⏹';
     label.textContent = 'Đang thu âm... Hãy nói tự nhiên, nghỉ lấy hơi thoải mái';
-    
-    initAudioVisualization(stream);
 
-    // Thu audio song song để chấm âm vị thật (nếu bật)
-    if (typeof phonemeStartCapture === 'function') phonemeStartCapture(stream);
-
-    // continuous = true cho phép bác sĩ Long ngắt nghỉ lấy hơi giữa câu thoải mái
+    // continuous = true cho phép ngắt nghỉ lấy hơi giữa câu thoải mái
     state.recognition = initSpeechRecognition(true);
+
+    // Chỉ mở getUserMedia cho visualizer / Allosaurus nếu không bị xung đột trên WebKit iOS,
+    // hoặc khi không có SpeechRecognition (AI-only mode)
+    if (!shouldAvoidConcurrentStream || !state.recognition) {
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          recordingStream = stream;
+          initAudioVisualization(stream);
+          if (typeof phonemeStartCapture === 'function') phonemeStartCapture(stream);
+        }
+      } catch (streamErr) {
+        console.warn('getUserMedia stream warning:', streamErr);
+      }
+    }
+
     const asrResult = document.getElementById('asrResult');
     const asrTranscript = document.getElementById('asrTranscript');
 
@@ -1024,19 +1043,26 @@ function saveAiApiBase() {
 }
 
 function fallbackWebSpeech(text, rate) {
+  if (typeof MobileCap !== 'undefined' && MobileCap.speakNaturalText) {
+    MobileCap.speakNaturalText(text, { rate });
+    return;
+  }
   if ('speechSynthesis' in window) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
-    utterance.rate = rate;
-    utterance.pitch = 1;
+    utterance.rate = Math.max(0.85, Math.min(1.10, rate || 0.9));
+    utterance.pitch = 1.0;
     
     const voices = window.speechSynthesis.getVoices();
-    const enVoice = voices.find(v => v.lang === 'en-US' && v.name.includes('Samantha')) ||
+    const enVoice = voices.find(v => v.lang.startsWith('en') && /ava|samantha|daniel|google/i.test(v.name)) ||
                     voices.find(v => v.lang === 'en-US') ||
                     voices.find(v => v.lang.startsWith('en'));
     if (enVoice) utterance.voice = enVoice;
     
-    window.speechSynthesis.speak(utterance);
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+    setTimeout(() => {
+      try { window.speechSynthesis.speak(utterance); } catch (e) {}
+    }, 40);
   }
 }
 
@@ -2163,6 +2189,17 @@ async function loadStateFromServer() {
 
 // ── Initialize ────────────────────────────────────────────────
 async function init() {
+  // In-App browser check
+  if (typeof MobileCap !== 'undefined' && MobileCap.isInsideInAppBrowser()) {
+    const inAppName = MobileCap.getInAppBrowserName();
+    const alertEl = document.getElementById('inAppBrowserAlert');
+    const nameEl = document.getElementById('inAppNameText');
+    if (alertEl) {
+      if (nameEl && inAppName) nameEl.textContent = inAppName;
+      alertEl.style.display = 'block';
+    }
+  }
+
   // Load voices
   if ('speechSynthesis' in window) {
     window.speechSynthesis.getVoices();

@@ -1,0 +1,52 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - feature/pronunciation-coach
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish to gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          rm -rf /tmp/pm-gh-pages
+          if git ls-remote --exit-code --heads origin gh-pages; then
+            git fetch origin gh-pages
+            git worktree add /tmp/pm-gh-pages origin/gh-pages
+          else
+            git worktree add --detach /tmp/pm-gh-pages
+            cd /tmp/pm-gh-pages
+            git checkout --orphan gh-pages
+            cd -
+          fi
+
+          find /tmp/pm-gh-pages -mindepth 1 -maxdepth 1 \
+            ! -name ".git" \
+            ! -name ".github" \
+            -exec rm -rf {} +
+          cp -R . /tmp/pm-gh-pages/
+          rm -rf /tmp/pm-gh-pages/.git /tmp/pm-gh-pages/.github
+          touch /tmp/pm-gh-pages/.nojekyll
+
+          cd /tmp/pm-gh-pages
+          git add -A
+          git commit -m "Deploy ${GITHUB_SHA}" || echo "No changes to commit"
+          git push origin HEAD:gh-pages
+          cd -
+          git worktree remove /tmp/pm-gh-pages --force

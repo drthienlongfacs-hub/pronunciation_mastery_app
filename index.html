@@ -18,6 +18,11 @@
       <span class="user-badge" style="cursor:pointer;" onclick="toggleSettingsPanel()" title="Cấu hình kết nối máy chủ AI">ThS.BS.CKII. Lê Trọng Thiên Long ⚙️</span>
     </header>
 
+    <!-- In-App Browser Alert Banner -->
+    <div id="inAppBrowserAlert" style="display:none; max-width:800px; margin:10px auto; padding:12px 16px; border-radius:8px; background:#FEF3C7; border:1.5px solid #F59E0B; color:#92400E; font-size:0.85rem; line-height:1.5;">
+      ⚠️ <strong>Đang mở trong <span id="inAppNameText">ứng dụng</span>:</strong> Micro và nhận diện giọng nói có thể bị chặn ngầm. Hãy nhấn <strong>⋮</strong> hoặc biểu tượng chia sẻ ở góc trên và chọn <strong>"Mở bằng Safari / Chrome"</strong> để kích hoạt đầy đủ tính năng luyện nói.
+    </div>
+
     <!-- ═══ NAVIGATION ═══ -->
     <nav class="nav-tabs" id="navTabs">
       <button class="nav-tab active" data-tab="dashboard" id="nav-dashboard">
@@ -503,9 +508,10 @@
   </div>
 
   <script src="data/exercises_ext.js?v=202606181640"></script>
-  <script src="js/app.js?v=202606181640"></script>
-  <script src="js/srs.js?v=202606181640"></script>
-  <script src="js/review.js?v=202606181640"></script>
-  <script src="js/phoneme.js?v=202606181640"></script>
+  <script src="js/mobileCapability.js?v=20260821"></script>
+  <script src="js/app.js?v=20260821"></script>
+  <script src="js/srs.js?v=20260821"></script>
+  <script src="js/review.js?v=20260821"></script>
+  <script src="js/phoneme.js?v=20260821"></script>
 </body>
 </html>

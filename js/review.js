@@ -162,6 +162,22 @@ function showReviewItem() {
 function skipReviewItem() { reviewIdx++; showReviewItem(); }
 function nextReviewItem() { reviewIdx++; showReviewItem(); }
 
+function manualScoreReviewItem(score) {
+  const item = reviewQueue[reviewIdx];
+  if (!item) return;
+  scoreReviewItem(item, score >= 80 ? item.text : '');
+  const mr = document.getElementById('reviewMatchResult');
+  if (mr) {
+    mr.style.display = 'block';
+    document.getElementById('reviewScoreRing').style.setProperty('--score', score);
+    document.getElementById('reviewScoreValue').textContent = score + '%';
+    const fb = document.getElementById('reviewMatchFeedback');
+    if (score >= 90) { fb.textContent = '🎉 Tự đánh giá: Xuất sắc! Lịch ôn được giãn ra.'; fb.style.color = 'var(--accent-green)'; }
+    else if (score >= 70) { fb.textContent = '👍 Tự đánh giá: Khá. Mục này sẽ ôn lại sớm.'; fb.style.color = 'var(--accent-amber)'; }
+    else { fb.textContent = '💪 Tự đánh giá: Cần luyện thêm — sẽ quay lại sớm hơn.'; fb.style.color = 'var(--accent-red)'; }
+  }
+}
+
 async function toggleReviewRecording() {
   const btn = document.getElementById('reviewRecordBtn');
   const label = document.getElementById('reviewRecordLabel');
@@ -173,7 +189,9 @@ async function toggleReviewRecording() {
     state.isRecording = false;
     btn.classList.remove('recording');
     if (icon) icon.textContent = '🎙️';
-    if (state.recognition) state.recognition.stop();
+    if (state.recognition) {
+      try { state.recognition.stop(); } catch (e) {}
+    }
     stopVisualization();
     if (recordingStream) { recordingStream.getTracks().forEach(t => t.stop()); recordingStream = null; }
     return;
@@ -181,16 +199,30 @@ async function toggleReviewRecording() {
 
   try {
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    recordingStream = stream;
+    if ('speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+
     state.isRecording = true;
     btn.classList.add('recording');
     if (icon) icon.textContent = '⏹';
-    label.textContent = 'Đang thu âm...';
+    label.textContent = 'Đang thu âm... Hãy nói to, rõ ràng';
 
     state.recognition = initSpeechRecognition(item.type === 'sentence');
-    if (!state.recognition) { label.textContent = 'Trình duyệt không hỗ trợ. Dùng Chrome.'; return; }
+    if (!state.recognition) {
+      label.innerHTML = `<span>Micro không khả dụng.</span><div style="margin-top:6px;display:flex;gap:4px;justify-content:center"><button class="btn btn-ghost btn-sm" onclick="manualScoreReviewItem(90)">✅ Thuộc (90%)</button><button class="btn btn-ghost btn-sm" onclick="manualScoreReviewItem(60)">💪 Cần ôn (60%)</button></div>`;
+      return;
+    }
+
+    const caps = typeof MobileCap !== 'undefined' ? MobileCap.detectDeviceCapabilities() : {};
+    if (!caps.isiOS && !caps.isSafari) {
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          recordingStream = stream;
+        }
+      } catch (e) {}
+    }
 
     state.recognition.onresult = async (event) => {
       let transcript = '';
@@ -199,7 +231,9 @@ async function toggleReviewRecording() {
       if (r) { r.style.display = 'block'; document.getElementById('reviewAsrTranscript').textContent = transcript; }
       await scoreReviewItem(item, transcript);
     };
-    state.recognition.onerror = (e) => { label.textContent = `Lỗi: ${e.error}`; };
+    state.recognition.onerror = (e) => {
+      label.innerHTML = `<span>Lỗi nhận diện (${e.error}).</span><div style="margin-top:6px;display:flex;gap:4px;justify-content:center"><button class="btn btn-ghost btn-sm" onclick="manualScoreReviewItem(90)">✅ Tự chấm 90%</button><button class="btn btn-ghost btn-sm" onclick="manualScoreReviewItem(60)">💪 Ôn lại 60%</button></div>`;
+    };
     state.recognition.onend = () => {
       if (state.isRecording && item.type === 'sentence') {
         try { state.recognition.start(); } catch (e) {}
@@ -213,7 +247,7 @@ async function toggleReviewRecording() {
     };
     state.recognition.start();
   } catch (err) {
-    label.textContent = 'Lỗi microphone';
+    label.innerHTML = `<span>Không thể mở micro.</span><div style="margin-top:6px;display:flex;gap:4px;justify-content:center"><button class="btn btn-ghost btn-sm" onclick="manualScoreReviewItem(90)">✅ Thuộc (90%)</button><button class="btn btn-ghost btn-sm" onclick="manualScoreReviewItem(60)">💪 Cần ôn (60%)</button></div>`;
   }
 }
 
